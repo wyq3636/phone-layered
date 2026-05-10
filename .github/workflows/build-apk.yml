@@ -1,0 +1,60 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Setup Java JDK
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Install Capacitor CLI
+      run: npm install @capacitor/cli @capacitor/android @capacitor/core
+
+    - name: Add Android platform
+      run: npx cap add android
+
+    - name: Sync web assets to Android
+      run: npx cap sync android
+
+    - name: Build Debug APK
+      working-directory: android
+      run: |
+        chmod +x ./gradlew
+        ./gradlew assembleDebug
+
+    - name: Build Release APK (unsigned)
+      working-directory: android
+      run: ./gradlew assembleRelease
+      continue-on-error: true
+
+    - name: Upload Debug APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: 分层便签-debug
+        path: android/app/build/outputs/apk/debug/app-debug.apk
+        if-no-files-found: warn
+
+    - name: Upload Release APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: 分层便签-release
+        path: android/app/build/outputs/apk/release/app-release-unsigned.apk
+        if-no-files-found: warn
+      continue-on-error: true

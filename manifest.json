@@ -1,0 +1,10 @@
+{
+  "name": "手机分层便签",
+  "short_name": "分层便签",
+  "description": "一个支持无限层级文件夹的手机便签应用",
+  "start_url": "index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F5F5F7",
+  "theme_color": "#6C63FF"
+}

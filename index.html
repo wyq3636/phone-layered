@@ -1,0 +1,1570 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#6C63FF">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="分层便签">
+<link rel="manifest" href="manifest.json">
+<title>手机分层便签</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  :root {
+    --primary: #6C63FF;
+    --primary-light: #EAE8FF;
+    --surface: #FFFFFF;
+    --bg: #F5F5F7;
+    --text: #1A1A2E;
+    --text-muted: #888;
+    --border: #E8E8ED;
+    --radius: 12px;
+    --folder-color: #FFB347;
+  }
+
+  html, body {
+    height: 100%;
+    font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+  }
+
+  #app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    max-width: 430px;
+    margin: 0 auto;
+    background: var(--bg);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 40px rgba(0,0,0,0.15);
+  }
+
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 20px 4px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+  .status-time { font-size: 15px; font-weight: 700; }
+  .status-icons { display: flex; gap: 6px; align-items: center; font-size: 13px; }
+
+  .app-header {
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    gap: 10px;
+    flex-shrink: 0;
+    min-height: 52px;
+  }
+  .btn-back {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    color: var(--primary);
+  }
+  .btn-back:active { background: var(--primary-light); }
+  .header-title {
+    flex: 1;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .header-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .btn-icon {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--primary);
+    transition: background 0.15s;
+  }
+  .btn-icon:active { background: var(--primary-light); }
+
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    padding: 8px 16px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    gap: 4px;
+    overflow-x: auto;
+    flex-shrink: 0;
+    scrollbar-width: none;
+  }
+  .breadcrumb::-webkit-scrollbar { display: none; }
+  .bc-item {
+    font-size: 13px;
+    color: var(--primary);
+    white-space: nowrap;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+  }
+  .bc-item:active { background: var(--primary-light); }
+  .bc-sep { font-size: 12px; color: var(--text-muted); }
+  .bc-current { color: var(--text); font-weight: 500; }
+
+  .file-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .file-list::-webkit-scrollbar { width: 4px; }
+  .file-list::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+
+  .file-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 14px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    gap: 12px;
+    transition: all 0.15s;
+    position: relative;
+    user-select: none;
+  }
+  .file-item:active { transform: scale(0.98); background: #F8F8FC; }
+  .file-item.folder { border-left: 3px solid var(--folder-color); }
+  .file-item.note { border-left: 3px solid var(--primary); }
+
+  .item-icon { font-size: 26px; flex-shrink: 0; width: 36px; text-align: center; }
+  .item-info { flex: 1; min-width: 0; }
+  .item-name {
+    font-size: 15px; font-weight: 500; color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .item-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .item-actions {
+    opacity: 0.5; font-size: 20px; padding: 4px;
+    cursor: pointer; color: var(--text-muted);
+  }
+  .item-actions:active { opacity: 1; }
+
+  .empty-state {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; padding: 60px 20px;
+    color: var(--text-muted); gap: 12px;
+  }
+  .empty-icon { font-size: 56px; }
+  .empty-text { font-size: 15px; font-weight: 500; color: #aaa; }
+  .empty-sub { font-size: 13px; color: #bbb; text-align: center; }
+
+  .fab-container {
+    position: absolute; bottom: 24px; right: 20px;
+    display: flex; flex-direction: column; align-items: flex-end;
+    gap: 10px; z-index: 10;
+  }
+  .fab-menu {
+    display: flex; flex-direction: column; gap: 10px; align-items: flex-end;
+    transition: all 0.25s; overflow: hidden; max-height: 0; opacity: 0;
+  }
+  .fab-menu.open { max-height: 300px; opacity: 1; }
+  .fab-sub { display: flex; align-items: center; gap: 10px; }
+  .fab-label {
+    background: rgba(0,0,0,0.7); color: white; font-size: 13px;
+    padding: 5px 10px; border-radius: 20px; white-space: nowrap;
+  }
+  .fab-btn {
+    width: 46px; height: 46px; border-radius: 50%; border: none;
+    cursor: pointer; font-size: 22px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.2); transition: transform 0.15s;
+  }
+  .fab-btn:active { transform: scale(0.92); }
+  .fab-main {
+    width: 54px; height: 54px; border-radius: 50%;
+    background: var(--primary); border: none; color: white; font-size: 26px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 6px 20px rgba(108,99,255,0.45); transition: transform 0.2s; z-index: 11;
+  }
+  .fab-main:active { transform: scale(0.92); }
+  .fab-main.open { transform: rotate(45deg); }
+
+  /* EDITOR */
+  #editor-view {
+    display: none; flex-direction: column; height: 100vh;
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 20; transition: transform 0.3s ease; transform: translateX(100%);
+  }
+  #editor-view.active { display: flex; transform: translateX(0); }
+
+  .editor-header {
+    display: flex; align-items: center; padding: 10px 16px;
+    gap: 10px; flex-shrink: 0; border-bottom: 1px solid var(--border); min-height: 52px;
+  }
+  .note-title-input {
+    flex: 1; border: none; background: transparent;
+    font-size: 17px; font-weight: 700; color: var(--text);
+    outline: none; font-family: inherit;
+  }
+  .note-title-input::placeholder { color: #bbb; }
+
+  .editor-toolbar {
+    display: flex; align-items: center; padding: 8px 12px; gap: 4px;
+    overflow-x: auto; flex-shrink: 0; border-bottom: 1px solid var(--border);
+    scrollbar-width: none; flex-wrap: wrap;
+  }
+  .editor-toolbar::-webkit-scrollbar { display: none; }
+
+  .toolbar-section { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+  .toolbar-sep { width: 1px; height: 24px; background: var(--border); margin: 0 4px; flex-shrink: 0; }
+
+  .tb-btn {
+    height: 32px; padding: 0 8px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--surface);
+    font-size: 13px; cursor: pointer; color: var(--text);
+    display: flex; align-items: center; justify-content: center;
+    gap: 4px; white-space: nowrap; transition: all 0.15s; flex-shrink: 0;
+  }
+  .tb-btn:active, .tb-btn.active {
+    background: var(--primary-light); border-color: var(--primary); color: var(--primary);
+  }
+
+  .tb-select {
+    height: 32px; padding: 0 6px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--surface);
+    font-size: 13px; color: var(--text); cursor: pointer; outline: none; max-width: 90px;
+  }
+
+  .tb-color-btn {
+    width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: hidden; flex-shrink: 0;
+  }
+  .tb-color-btn input[type=color] {
+    position: absolute; width: 200%; height: 200%; top: -50%; left: -50%;
+    border: none; cursor: pointer; opacity: 0;
+  }
+
+  .editor-area { flex: 1; overflow: hidden; position: relative; }
+  #note-content {
+    width: 100%; height: 100%; border: none; outline: none;
+    padding: 16px; font-size: 15px; line-height: 1.7; color: var(--text);
+    background: transparent; font-family: inherit; resize: none; overflow-y: auto;
+  }
+  #note-content::placeholder { color: #bbb; }
+
+  .editor-status {
+    padding: 6px 16px; font-size: 12px; color: var(--text-muted);
+    background: var(--surface); border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; flex-shrink: 0;
+  }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5); z-index: 50;
+    align-items: flex-end; justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-sheet {
+    background: var(--surface); border-radius: 20px 20px 0 0;
+    padding: 20px; width: 100%; animation: slideUp 0.3s ease;
+    max-height: 85vh; overflow-y: auto;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  .modal-title {
+    font-size: 16px; font-weight: 700; margin-bottom: 16px;
+    text-align: center; color: var(--text);
+  }
+  .modal-input {
+    width: 100%; padding: 12px 16px; border-radius: 12px;
+    border: 1px solid var(--border); font-size: 15px; color: var(--text);
+    background: var(--bg); outline: none; font-family: inherit; margin-bottom: 14px;
+  }
+  .modal-input:focus { border-color: var(--primary); }
+  .modal-btns { display: flex; gap: 10px; }
+  .modal-btn {
+    flex: 1; padding: 12px; border-radius: 12px; border: none;
+    font-size: 15px; font-weight: 600; cursor: pointer; transition: opacity 0.15s;
+  }
+  .modal-btn:active { opacity: 0.8; }
+  .modal-btn.cancel { background: var(--bg); color: var(--text); }
+  .modal-btn.confirm { background: var(--primary); color: white; }
+
+  /* THEME */
+  .theme-section { margin-bottom: 16px; }
+  .theme-label { font-size: 13px; color: var(--text-muted); margin-bottom: 10px; font-weight: 500; }
+  .theme-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .theme-item {
+    aspect-ratio: 1; border-radius: 12px; cursor: pointer; border: 2px solid transparent;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; color: rgba(0,0,0,0.5); font-weight: 500;
+    transition: border-color 0.15s; position: relative; overflow: hidden;
+  }
+  .theme-item.active { border-color: var(--primary); }
+  .theme-item::after {
+    content: '✓'; position: absolute; top: 3px; right: 5px;
+    font-size: 11px; color: var(--primary); display: none; font-weight: 700;
+  }
+  .theme-item.active::after { display: block; }
+
+  /* CONTEXT MENU */
+  .ctx-menu {
+    display: none; position: absolute; background: var(--surface);
+    border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    z-index: 60; overflow: hidden; min-width: 160px;
+  }
+  .ctx-menu.show { display: block; }
+  .ctx-item {
+    padding: 12px 16px; font-size: 14px; cursor: pointer; color: var(--text);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .ctx-item:hover { background: var(--bg); }
+  .ctx-item.danger { color: #E24B4A; }
+  .ctx-sep { height: 1px; background: var(--border); }
+
+  /* Backgrounds */
+  .bg-white { background: #FFFFFF; }
+  .bg-warm { background: #FFF8F0; }
+  .bg-mint { background: #F0FFF4; }
+  .bg-lavender { background: #F5F0FF; }
+  .bg-sky { background: #F0F8FF; }
+  .bg-rose { background: #FFF0F5; }
+  .bg-cream { background: #FFFEF0; }
+  .bg-sage { background: #F0F5F0; }
+
+  /* Search */
+  .search-bar {
+    padding: 8px 12px; background: var(--surface);
+    border-bottom: 1px solid var(--border); flex-shrink: 0;
+  }
+  .search-input {
+    width: 100%; padding: 8px 14px 8px 36px; border-radius: 20px;
+    border: 1px solid var(--border); font-size: 14px;
+    background: var(--bg); color: var(--text); outline: none; font-family: inherit;
+  }
+  .search-input:focus { border-color: var(--primary); }
+  .search-wrap { position: relative; }
+  .search-icon {
+    position: absolute; left: 12px; top: 50%;
+    transform: translateY(-50%); font-size: 15px;
+    color: var(--text-muted); pointer-events: none;
+  }
+
+  /* Font size ctrl */
+  .font-size-ctrl { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+  .font-size-ctrl button {
+    width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border);
+    background: var(--surface); font-size: 16px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text); font-weight: 700; flex-shrink: 0;
+  }
+  .font-size-ctrl button:active { background: var(--primary-light); }
+  .font-size-val { font-size: 12px; color: var(--text); min-width: 22px; text-align: center; }
+
+  /* ===== EXPORT MODAL ===== */
+  .export-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .export-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 14px 8px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    background: var(--bg);
+    transition: all 0.15s;
+  }
+  .export-item:active { background: var(--primary-light); border-color: var(--primary); }
+  .export-icon { font-size: 28px; }
+  .export-label { font-size: 12px; color: var(--text); font-weight: 500; }
+  .export-desc { font-size: 11px; color: var(--text-muted); text-align: center; }
+
+  /* ===== SHARE MODAL ===== */
+  .share-apps {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .share-app {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    padding: 10px 4px;
+    border-radius: 12px;
+    transition: background 0.15s;
+  }
+  .share-app:active { background: var(--bg); }
+  .share-app-icon {
+    width: 52px; height: 52px;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  }
+  .share-app-name { font-size: 12px; color: var(--text); }
+
+  .share-copy-area {
+    background: var(--bg);
+    border-radius: 12px;
+    padding: 12px;
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    word-break: break-all;
+    line-height: 1.6;
+    max-height: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+  }
+  .share-copy-btn {
+    width: 100%;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1.5px dashed var(--primary);
+    background: var(--primary-light);
+    color: var(--primary);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 8px;
+  }
+  .share-copy-btn:active { opacity: 0.8; }
+
+  /* TOAST */
+  .toast {
+    position: absolute;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: rgba(0,0,0,0.75);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 24px;
+    font-size: 14px;
+    z-index: 100;
+    opacity: 0;
+    transition: all 0.3s;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Section divider in modal */
+  .modal-section-title {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 500;
+    margin-bottom: 10px;
+    margin-top: 4px;
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- STATUS BAR -->
+  <div class="status-bar">
+    <span class="status-time" id="clock">18:34</span>
+    <div class="status-icons">
+      <span>●●●</span><span>WiFi</span><span>🔋</span>
+    </div>
+  </div>
+
+  <!-- MAIN FILE VIEW -->
+  <div id="main-view">
+    <div class="app-header">
+      <button class="btn-back" id="btn-back" style="visibility:hidden">‹</button>
+      <span class="header-title" id="header-title">手机分层便签</span>
+      <div class="header-actions">
+        <button class="btn-icon" id="btn-export-all" title="导出全部">📤</button>
+        <button class="btn-icon" id="btn-theme" title="背景主题">🎨</button>
+        <button class="btn-icon" id="btn-sort" title="排序">⇅</button>
+      </div>
+    </div>
+
+    <div class="breadcrumb" id="breadcrumb">
+      <span class="bc-item bc-current" data-id="root">全部</span>
+    </div>
+
+    <div class="search-bar">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input class="search-input" id="search-input" placeholder="搜索便签…" type="search">
+      </div>
+    </div>
+
+    <div class="file-list" id="file-list"></div>
+
+    <!-- FAB -->
+    <div class="fab-container">
+      <div class="fab-menu" id="fab-menu">
+        <div class="fab-sub">
+          <span class="fab-label">新建笔记</span>
+          <button class="fab-btn" id="btn-new-note" style="background:#6C63FF;color:white">📝</button>
+        </div>
+        <div class="fab-sub">
+          <span class="fab-label">新建文件夹</span>
+          <button class="fab-btn" id="btn-new-folder" style="background:#FFB347;color:white">📁</button>
+        </div>
+      </div>
+      <button class="fab-main" id="fab-main">+</button>
+    </div>
+  </div>
+
+  <!-- EDITOR VIEW -->
+  <div id="editor-view">
+    <div class="editor-header">
+      <button class="btn-back" id="editor-back">‹</button>
+      <input class="note-title-input" id="note-title" placeholder="无标题" autocomplete="off">
+      <div class="header-actions">
+        <button class="btn-icon" id="btn-note-theme" title="背景">🎨</button>
+        <button class="btn-icon" id="btn-editor-export" title="导出">📤</button>
+        <button class="btn-icon" id="btn-editor-share" title="分享">↗</button>
+        <button class="btn-icon" id="btn-save" title="保存">💾</button>
+      </div>
+    </div>
+
+    <div class="editor-toolbar" id="editor-toolbar">
+      <div class="toolbar-section">
+        <select class="tb-select" id="font-select" style="max-width:96px">
+          <option value="system-ui,-apple-system,'PingFang SC','Microsoft YaHei',sans-serif">默认</option>
+          <option value="'PingFang SC','Microsoft YaHei',sans-serif">苹方/雅黑</option>
+          <option value="Georgia,'Times New Roman',serif">宋体风格</option>
+          <option value="'Courier New',monospace">等宽</option>
+          <option value="'Noto Serif SC',serif">Noto宋</option>
+          <option value="cursive">手写体</option>
+        </select>
+      </div>
+
+      <div class="toolbar-sep"></div>
+
+      <div class="toolbar-section font-size-ctrl">
+        <button id="font-dec">－</button>
+        <span class="font-size-val" id="font-size-val">15</span>
+        <button id="font-inc">＋</button>
+      </div>
+
+      <div class="toolbar-sep"></div>
+
+      <div class="toolbar-section">
+        <button class="tb-btn" id="tb-bold"><b>B</b></button>
+        <button class="tb-btn" id="tb-italic"><i>I</i></button>
+        <button class="tb-btn" id="tb-underline"><u>U</u></button>
+      </div>
+
+      <div class="toolbar-sep"></div>
+
+      <div class="toolbar-section">
+        <div class="tb-color-btn" title="字体颜色" style="background:linear-gradient(135deg,#f00,#00f)">
+          <input type="color" id="text-color" value="#1A1A2E">
+        </div>
+        <div class="tb-color-btn" title="高亮颜色" style="background:linear-gradient(135deg,#FFD700,#90EE90)">
+          <input type="color" id="highlight-color" value="#FFEB3B">
+        </div>
+      </div>
+
+      <div class="toolbar-sep"></div>
+
+      <div class="toolbar-section">
+        <button class="tb-btn" id="tb-left">≡</button>
+        <button class="tb-btn" id="tb-center">≡</button>
+        <button class="tb-btn" id="tb-right">≡</button>
+      </div>
+    </div>
+
+    <div class="editor-area" id="editor-bg-area">
+      <textarea id="note-content" placeholder="开始书写你的想法…"></textarea>
+    </div>
+
+    <div class="editor-status">
+      <span id="word-count">0 字</span>
+      <span id="save-status">未保存</span>
+    </div>
+  </div>
+
+  <!-- THEME MODAL -->
+  <div class="modal-overlay" id="theme-modal">
+    <div class="modal-sheet">
+      <div class="modal-title">选择背景主题</div>
+      <div class="theme-section">
+        <div class="theme-label">柔和背景色</div>
+        <div class="theme-grid" id="theme-grid">
+          <div class="theme-item bg-white active" data-bg="#FFFFFF" data-name="纯白">纯白</div>
+          <div class="theme-item bg-warm" data-bg="#FFF8F0" data-name="暖橙">暖橙</div>
+          <div class="theme-item bg-mint" data-bg="#F0FFF4" data-name="薄荷">薄荷</div>
+          <div class="theme-item bg-lavender" data-bg="#F5F0FF" data-name="薰衣草">薰衣</div>
+          <div class="theme-item bg-sky" data-bg="#F0F8FF" data-name="天蓝">天蓝</div>
+          <div class="theme-item bg-rose" data-bg="#FFF0F5" data-name="玫瑰">玫瑰</div>
+          <div class="theme-item bg-cream" data-bg="#FFFEF0" data-name="奶油">奶油</div>
+          <div class="theme-item bg-sage" data-bg="#F0F5F0" data-name="鼠尾草">鼠尾</div>
+        </div>
+      </div>
+      <button class="modal-btn confirm" id="theme-close" style="width:100%">完成</button>
+    </div>
+  </div>
+
+  <!-- NEW FOLDER/NOTE MODAL -->
+  <div class="modal-overlay" id="name-modal">
+    <div class="modal-sheet">
+      <div class="modal-title" id="name-modal-title">新建文件夹</div>
+      <input class="modal-input" id="name-input" placeholder="输入名称…" maxlength="50">
+      <div class="modal-btns">
+        <button class="modal-btn cancel" id="name-cancel">取消</button>
+        <button class="modal-btn confirm" id="name-confirm">创建</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTEXT MENU -->
+  <div class="ctx-menu" id="ctx-menu">
+    <div class="ctx-item" id="ctx-rename">✏️ 重命名</div>
+    <div class="ctx-item" id="ctx-export">📤 导出</div>
+    <div class="ctx-item" id="ctx-share">↗ 分享</div>
+    <div class="ctx-sep"></div>
+    <div class="ctx-item danger" id="ctx-delete">🗑️ 删除</div>
+  </div>
+
+  <!-- RENAME MODAL -->
+  <div class="modal-overlay" id="rename-modal">
+    <div class="modal-sheet">
+      <div class="modal-title">重命名</div>
+      <input class="modal-input" id="rename-input" placeholder="输入新名称…" maxlength="50">
+      <div class="modal-btns">
+        <button class="modal-btn cancel" id="rename-cancel">取消</button>
+        <button class="modal-btn confirm" id="rename-confirm">确认</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXPORT MODAL -->
+  <div class="modal-overlay" id="export-modal">
+    <div class="modal-sheet">
+      <div class="modal-title" id="export-modal-title">导出便签</div>
+      <div class="modal-section-title">选择导出格式</div>
+      <div class="export-grid">
+        <div class="export-item" id="exp-txt">
+          <span class="export-icon">📄</span>
+          <span class="export-label">TXT 文本</span>
+          <span class="export-desc">纯文本，通用格式</span>
+        </div>
+        <div class="export-item" id="exp-word">
+          <span class="export-icon">📝</span>
+          <span class="export-label">Word 文档</span>
+          <span class="export-desc">可用 Word 打开</span>
+        </div>
+        <div class="export-item" id="exp-html">
+          <span class="export-icon">🌐</span>
+          <span class="export-label">网页 HTML</span>
+          <span class="export-desc">保留排版样式</span>
+        </div>
+        <div class="export-item" id="exp-md">
+          <span class="export-icon">✍️</span>
+          <span class="export-label">Markdown</span>
+          <span class="export-desc">Markdown 格式</span>
+        </div>
+        <div class="export-item" id="exp-pdf">
+          <span class="export-icon">📕</span>
+          <span class="export-label">PDF 文件</span>
+          <span class="export-desc">打印 / 分享</span>
+        </div>
+        <div class="export-item" id="exp-book">
+          <span class="export-icon">📚</span>
+          <span class="export-label">合并成书</span>
+          <span class="export-desc">多篇合一文档</span>
+        </div>
+      </div>
+      <button class="modal-btn cancel" id="export-close" style="width:100%">取消</button>
+    </div>
+  </div>
+
+  <!-- SHARE MODAL -->
+  <div class="modal-overlay" id="share-modal">
+    <div class="modal-sheet">
+      <div class="modal-title">分享便签</div>
+      <div class="share-copy-area" id="share-preview-text">便签内容预览…</div>
+      <div class="modal-section-title">分享到应用</div>
+      <div class="share-apps">
+        <div class="share-app" data-app="wechat">
+          <div class="share-app-icon" style="background:#07C160">💬</div>
+          <span class="share-app-name">微信</span>
+        </div>
+        <div class="share-app" data-app="wechat-moments">
+          <div class="share-app-icon" style="background:#07C160">🌐</div>
+          <span class="share-app-name">朋友圈</span>
+        </div>
+        <div class="share-app" data-app="qq">
+          <div class="share-app-icon" style="background:#1E90FF">🐧</div>
+          <span class="share-app-name">QQ</span>
+        </div>
+        <div class="share-app" data-app="feishu">
+          <div class="share-app-icon" style="background:#1B6EF3">🦅</div>
+          <span class="share-app-name">飞书</span>
+        </div>
+        <div class="share-app" data-app="dingding">
+          <div class="share-app-icon" style="background:#1677FF">📌</div>
+          <span class="share-app-name">钉钉</span>
+        </div>
+        <div class="share-app" data-app="weibo">
+          <div class="share-app-icon" style="background:#E6162D">🔴</div>
+          <span class="share-app-name">微博</span>
+        </div>
+        <div class="share-app" data-app="email">
+          <div class="share-app-icon" style="background:#FF6B35">📧</div>
+          <span class="share-app-name">邮件</span>
+        </div>
+        <div class="share-app" data-app="sms">
+          <div class="share-app-icon" style="background:#34C759">💬</div>
+          <span class="share-app-name">短信</span>
+        </div>
+      </div>
+      <button class="share-copy-btn" id="share-copy-btn">📋 复制内容到剪贴板</button>
+      <button class="modal-btn cancel" id="share-close" style="width:100%">取消</button>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+</div>
+
+<script>
+// ===================== DATA STORE =====================
+const STORAGE_KEY = 'phone_notes_v2';
+let store = loadStore();
+let currentFolderId = 'root';
+let currentBg = '#FFFFFF';
+let editorBg = '#FFFFFF';
+let currentNoteId = null;
+let fabOpen = false;
+let currentFontSize = 15;
+let contextTarget = null;
+let nameModalMode = 'folder';
+let sortOrder = 'date';
+let exportTarget = null; // { type: 'note'|'folder'|'all', id }
+
+function loadStore() {
+  try {
+    const d = localStorage.getItem(STORAGE_KEY);
+    if (d) return JSON.parse(d);
+  } catch(e) {}
+  return {
+    folders: { root: { id: 'root', name: '根目录', parent: null, children: [] } },
+    notes: {}
+  };
+}
+function saveStore() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+}
+
+// ===================== CLOCK =====================
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.getHours().toString().padStart(2,'0') + ':' +
+    now.getMinutes().toString().padStart(2,'0');
+}
+updateClock();
+setInterval(updateClock, 10000);
+
+// ===================== RENDER FILE LIST =====================
+function getChildren(folderId) {
+  const folder = store.folders[folderId];
+  if (!folder) return { folders: [], notes: [] };
+  const folders = (folder.children || []).filter(id => store.folders[id]).map(id => store.folders[id]);
+  const notes = Object.values(store.notes).filter(n => n.parent === folderId);
+  return { folders, notes };
+}
+
+function formatDate(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  const now = new Date();
+  const diff = now - d;
+  if (diff < 60000) return '刚刚';
+  if (diff < 3600000) return Math.floor(diff/60000) + '分钟前';
+  if (diff < 86400000) return Math.floor(diff/3600000) + '小时前';
+  return (d.getMonth()+1) + '/' + d.getDate();
+}
+
+function renderFileList(searchQuery = '') {
+  const list = document.getElementById('file-list');
+  const { folders, notes } = getChildren(currentFolderId);
+  let items = [];
+  folders.forEach(f => {
+    const childCount = (f.children||[]).length + Object.values(store.notes).filter(n=>n.parent===f.id).length;
+    if (!searchQuery || f.name.includes(searchQuery)) items.push({ type:'folder', data:f, count:childCount });
+  });
+  notes.forEach(n => {
+    if (!searchQuery || n.title.includes(searchQuery) || n.content.includes(searchQuery))
+      items.push({ type:'note', data:n });
+  });
+
+  if (items.length === 0) {
+    list.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">${searchQuery ? '🔍' : '📂'}</div>
+      <div class="empty-text">${searchQuery ? '未找到匹配内容' : '这里还是空的'}</div>
+      <div class="empty-sub">${searchQuery ? '换个关键词试试' : '点击右下角 + 新建便签或文件夹'}</div>
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = items.map(item => {
+    if (item.type === 'folder') {
+      return `<div class="file-item folder" data-id="${item.data.id}" data-type="folder">
+        <div class="item-icon">📁</div>
+        <div class="item-info">
+          <div class="item-name">${escHtml(item.data.name)}</div>
+          <div class="item-meta">${item.count} 项内容</div>
+        </div>
+        <span class="item-actions" data-ctx="${item.data.id}" data-ctx-type="folder">⋯</span>
+      </div>`;
+    } else {
+      const n = item.data;
+      const preview = n.content ? n.content.replace(/\n/g,' ').slice(0,40) : '空白便签';
+      return `<div class="file-item note" data-id="${n.id}" data-type="note">
+        <div class="item-icon">📝</div>
+        <div class="item-info">
+          <div class="item-name">${escHtml(n.title || '无标题')}</div>
+          <div class="item-meta">${preview} · ${formatDate(n.updated)}</div>
+        </div>
+        <span class="item-actions" data-ctx="${n.id}" data-ctx-type="note">⋯</span>
+      </div>`;
+    }
+  }).join('');
+
+  list.querySelectorAll('.file-item').forEach(el => {
+    el.addEventListener('click', function(e) {
+      if (e.target.classList.contains('item-actions')) return;
+      if (this.dataset.type === 'folder') openFolder(this.dataset.id);
+      else openNote(this.dataset.id);
+    });
+  });
+  list.querySelectorAll('.item-actions').forEach(el => {
+    el.addEventListener('click', function(e) {
+      e.stopPropagation();
+      showCtxMenu(e, this.dataset.ctx, this.dataset.ctxType);
+    });
+  });
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ===================== NAVIGATION =====================
+function openFolder(id) {
+  currentFolderId = id;
+  updateHeader();
+  renderFileList();
+  closeFab();
+}
+
+function updateHeader() {
+  const folder = store.folders[currentFolderId];
+  const title = currentFolderId === 'root' ? '手机分层便签' : folder.name;
+  document.getElementById('header-title').textContent = title;
+  document.getElementById('btn-back').style.visibility = currentFolderId === 'root' ? 'hidden' : 'visible';
+  renderBreadcrumb();
+}
+
+function renderBreadcrumb() {
+  const bc = document.getElementById('breadcrumb');
+  const path = getPath(currentFolderId);
+  bc.innerHTML = path.map((p, i) => {
+    const isLast = i === path.length - 1;
+    return (i > 0 ? '<span class="bc-sep">›</span>' : '') +
+      `<span class="${isLast ? 'bc-item bc-current' : 'bc-item'}" data-id="${p.id}">${escHtml(p.name)}</span>`;
+  }).join('');
+  bc.querySelectorAll('.bc-item').forEach(el => el.addEventListener('click', () => openFolder(el.dataset.id)));
+  bc.scrollLeft = bc.scrollWidth;
+}
+
+function getPath(id) {
+  const path = [];
+  let current = id;
+  while (current) {
+    const f = store.folders[current];
+    if (!f) break;
+    path.unshift({ id: current, name: current === 'root' ? '全部' : f.name });
+    current = f.parent;
+  }
+  return path;
+}
+
+document.getElementById('btn-back').addEventListener('click', () => {
+  const folder = store.folders[currentFolderId];
+  if (folder && folder.parent !== null) openFolder(folder.parent);
+});
+
+// ===================== FAB =====================
+const fabMain = document.getElementById('fab-main');
+const fabMenu = document.getElementById('fab-menu');
+function closeFab() {
+  fabOpen = false;
+  fabMenu.classList.remove('open');
+  fabMain.classList.remove('open');
+}
+fabMain.addEventListener('click', () => {
+  fabOpen = !fabOpen;
+  fabMenu.classList.toggle('open', fabOpen);
+  fabMain.classList.toggle('open', fabOpen);
+});
+document.getElementById('file-list').addEventListener('click', closeFab);
+
+// ===================== NEW FOLDER / NOTE =====================
+let nameConfirmFn = null;
+function showNameModal(title, placeholder, mode, onConfirm) {
+  nameModalMode = mode;
+  document.getElementById('name-modal-title').textContent = title;
+  document.getElementById('name-input').placeholder = placeholder;
+  document.getElementById('name-input').value = '';
+  nameConfirmFn = onConfirm;
+  document.getElementById('name-modal').classList.add('show');
+  setTimeout(() => document.getElementById('name-input').focus(), 300);
+  closeFab();
+}
+
+document.getElementById('btn-new-folder').addEventListener('click', () => {
+  showNameModal('新建文件夹', '输入文件夹名称…', 'folder', createFolder);
+});
+document.getElementById('btn-new-note').addEventListener('click', () => {
+  const id = genId();
+  store.notes[id] = {
+    id, title: '', content: '', parent: currentFolderId,
+    created: Date.now(), updated: Date.now(), bg: '#FFFFFF',
+    fontFamily: "system-ui,-apple-system,'PingFang SC','Microsoft YaHei',sans-serif", fontSize: 15
+  };
+  saveStore();
+  openNote(id);
+  closeFab();
+});
+
+document.getElementById('name-cancel').addEventListener('click', () => document.getElementById('name-modal').classList.remove('show'));
+document.getElementById('name-confirm').addEventListener('click', () => {
+  const val = document.getElementById('name-input').value.trim();
+  if (!val) { document.getElementById('name-input').focus(); return; }
+  if (nameConfirmFn) nameConfirmFn(val);
+  document.getElementById('name-modal').classList.remove('show');
+});
+document.getElementById('name-input').addEventListener('keydown', e => { if (e.key==='Enter') document.getElementById('name-confirm').click(); });
+
+function createFolder(name) {
+  const id = genId();
+  store.folders[id] = { id, name, parent: currentFolderId, children: [] };
+  const parent = store.folders[currentFolderId];
+  parent.children = parent.children || [];
+  parent.children.push(id);
+  saveStore();
+  renderFileList();
+}
+
+// ===================== CONTEXT MENU =====================
+function showCtxMenu(e, id, type) {
+  e.stopPropagation();
+  contextTarget = { id, type };
+  const menu = document.getElementById('ctx-menu');
+  const rect = e.target.getBoundingClientRect();
+  const appRect = document.getElementById('app').getBoundingClientRect();
+  menu.style.right = (appRect.right - rect.right + 10) + 'px';
+  menu.style.top = (rect.bottom - appRect.top + 4) + 'px';
+  menu.style.left = 'auto';
+  // show/hide export & share based on type
+  document.getElementById('ctx-export').style.display = type === 'note' ? 'flex' : 'none';
+  document.getElementById('ctx-share').style.display = type === 'note' ? 'flex' : 'none';
+  menu.classList.add('show');
+}
+
+document.addEventListener('click', e => {
+  if (!document.getElementById('ctx-menu').contains(e.target))
+    document.getElementById('ctx-menu').classList.remove('show');
+});
+
+document.getElementById('ctx-rename').addEventListener('click', () => {
+  document.getElementById('ctx-menu').classList.remove('show');
+  if (!contextTarget) return;
+  const current = contextTarget.type === 'folder'
+    ? store.folders[contextTarget.id].name
+    : store.notes[contextTarget.id].title;
+  document.getElementById('rename-input').value = current || '';
+  document.getElementById('rename-modal').classList.add('show');
+  setTimeout(() => document.getElementById('rename-input').focus(), 300);
+});
+
+document.getElementById('ctx-export').addEventListener('click', () => {
+  document.getElementById('ctx-menu').classList.remove('show');
+  if (contextTarget) showExportModal({ type: contextTarget.type, id: contextTarget.id });
+});
+
+document.getElementById('ctx-share').addEventListener('click', () => {
+  document.getElementById('ctx-menu').classList.remove('show');
+  if (contextTarget && contextTarget.type === 'note') showShareModal(contextTarget.id);
+});
+
+document.getElementById('ctx-delete').addEventListener('click', () => {
+  document.getElementById('ctx-menu').classList.remove('show');
+  if (!contextTarget) return;
+  if (contextTarget.type === 'folder') deleteFolder(contextTarget.id);
+  else { delete store.notes[contextTarget.id]; saveStore(); renderFileList(); }
+});
+
+document.getElementById('rename-cancel').addEventListener('click', () => document.getElementById('rename-modal').classList.remove('show'));
+document.getElementById('rename-confirm').addEventListener('click', () => {
+  const val = document.getElementById('rename-input').value.trim();
+  if (!val) return;
+  if (contextTarget.type === 'folder') store.folders[contextTarget.id].name = val;
+  else { store.notes[contextTarget.id].title = val; store.notes[contextTarget.id].updated = Date.now(); }
+  saveStore();
+  renderFileList();
+  document.getElementById('rename-modal').classList.remove('show');
+  updateHeader();
+});
+document.getElementById('rename-input').addEventListener('keydown', e => { if (e.key==='Enter') document.getElementById('rename-confirm').click(); });
+
+function deleteFolder(id) {
+  const folder = store.folders[id];
+  if (!folder) return;
+  (folder.children || []).forEach(cid => deleteFolder(cid));
+  Object.values(store.notes).filter(n=>n.parent===id).forEach(n => delete store.notes[n.id]);
+  if (folder.parent && store.folders[folder.parent])
+    store.folders[folder.parent].children = (store.folders[folder.parent].children||[]).filter(c=>c!==id);
+  delete store.folders[id];
+  saveStore();
+  renderFileList();
+}
+
+// ===================== EDITOR =====================
+let autoSaveTimer = null;
+
+function openNote(id) {
+  currentNoteId = id;
+  const note = store.notes[id];
+  document.getElementById('note-title').value = note.title || '';
+  document.getElementById('note-content').value = note.content || '';
+  currentFontSize = note.fontSize || 15;
+  document.getElementById('font-size-val').textContent = currentFontSize;
+  const content = document.getElementById('note-content');
+  content.style.fontSize = currentFontSize + 'px';
+  content.style.fontFamily = note.fontFamily || "system-ui,-apple-system,'PingFang SC','Microsoft YaHei',sans-serif";
+  document.getElementById('font-select').value = note.fontFamily || "system-ui,-apple-system,'PingFang SC','Microsoft YaHei',sans-serif";
+  editorBg = note.bg || '#FFFFFF';
+  applyEditorBg(editorBg);
+  updateWordCount();
+  document.getElementById('save-status').textContent = '已保存';
+  const ev = document.getElementById('editor-view');
+  ev.classList.add('active');
+  ev.style.display = 'flex';
+  setTimeout(() => content.focus(), 200);
+}
+
+function applyEditorBg(color) {
+  const area = document.getElementById('editor-bg-area');
+  const header = document.querySelector('#editor-view .editor-header');
+  const toolbar = document.getElementById('editor-toolbar');
+  area.style.background = color;
+  header.style.background = color;
+  toolbar.style.background = color;
+  document.getElementById('editor-view').style.background = color;
+}
+
+function closeEditor() {
+  saveCurrentNote();
+  document.getElementById('editor-view').classList.remove('active');
+  setTimeout(() => { document.getElementById('editor-view').style.display = 'none'; }, 300);
+  renderFileList();
+}
+
+function saveCurrentNote() {
+  if (!currentNoteId) return;
+  const note = store.notes[currentNoteId];
+  if (!note) return;
+  note.title = document.getElementById('note-title').value;
+  note.content = document.getElementById('note-content').value;
+  note.updated = Date.now();
+  note.bg = editorBg;
+  note.fontSize = currentFontSize;
+  note.fontFamily = document.getElementById('font-select').value;
+  saveStore();
+  document.getElementById('save-status').textContent = '已保存 ✓';
+}
+
+document.getElementById('editor-back').addEventListener('click', closeEditor);
+document.getElementById('note-content').addEventListener('input', () => {
+  updateWordCount();
+  document.getElementById('save-status').textContent = '编辑中…';
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(saveCurrentNote, 1500);
+});
+document.getElementById('note-title').addEventListener('input', () => {
+  document.getElementById('save-status').textContent = '编辑中…';
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(saveCurrentNote, 1500);
+});
+document.getElementById('btn-save').addEventListener('click', () => {
+  saveCurrentNote();
+  document.getElementById('save-status').textContent = '已保存 ✓';
+});
+
+function updateWordCount() {
+  const text = document.getElementById('note-content').value;
+  document.getElementById('word-count').textContent = text.replace(/\s/g,'').length + ' 字';
+}
+
+// ===================== TOOLBAR =====================
+document.getElementById('font-select').addEventListener('change', function() {
+  document.getElementById('note-content').style.fontFamily = this.value;
+  saveCurrentNote();
+});
+document.getElementById('font-inc').addEventListener('click', () => {
+  if (currentFontSize < 32) {
+    currentFontSize++;
+    document.getElementById('font-size-val').textContent = currentFontSize;
+    document.getElementById('note-content').style.fontSize = currentFontSize + 'px';
+    saveCurrentNote();
+  }
+});
+document.getElementById('font-dec').addEventListener('click', () => {
+  if (currentFontSize > 10) {
+    currentFontSize--;
+    document.getElementById('font-size-val').textContent = currentFontSize;
+    document.getElementById('note-content').style.fontSize = currentFontSize + 'px';
+    saveCurrentNote();
+  }
+});
+document.getElementById('text-color').addEventListener('input', function() {
+  document.getElementById('note-content').style.color = this.value;
+});
+document.getElementById('text-color').addEventListener('change', saveCurrentNote);
+
+let boldOn=false, italicOn=false, underlineOn=false;
+document.getElementById('tb-bold').addEventListener('click', function() {
+  boldOn=!boldOn; this.classList.toggle('active',boldOn);
+  document.getElementById('note-content').style.fontWeight = boldOn?'700':'400';
+});
+document.getElementById('tb-italic').addEventListener('click', function() {
+  italicOn=!italicOn; this.classList.toggle('active',italicOn);
+  document.getElementById('note-content').style.fontStyle = italicOn?'italic':'normal';
+});
+document.getElementById('tb-underline').addEventListener('click', function() {
+  underlineOn=!underlineOn; this.classList.toggle('active',underlineOn);
+  document.getElementById('note-content').style.textDecoration = underlineOn?'underline':'none';
+});
+document.getElementById('tb-left').addEventListener('click', function() { document.getElementById('note-content').style.textAlign='left'; setAlign(this); });
+document.getElementById('tb-center').addEventListener('click', function() { document.getElementById('note-content').style.textAlign='center'; setAlign(this); });
+document.getElementById('tb-right').addEventListener('click', function() { document.getElementById('note-content').style.textAlign='right'; setAlign(this); });
+function setAlign(btn) {
+  ['tb-left','tb-center','tb-right'].forEach(id => document.getElementById(id).classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ===================== THEME =====================
+function showThemeModal(forEditor=false) {
+  const modal = document.getElementById('theme-modal');
+  modal.dataset.forEditor = forEditor ? '1' : '0';
+  const val = forEditor ? editorBg : currentBg;
+  document.querySelectorAll('.theme-item').forEach(el => el.classList.toggle('active', el.dataset.bg===val));
+  modal.classList.add('show');
+}
+document.getElementById('btn-theme').addEventListener('click', () => showThemeModal(false));
+document.getElementById('btn-note-theme').addEventListener('click', () => showThemeModal(true));
+document.querySelectorAll('.theme-item').forEach(el => {
+  el.addEventListener('click', function() {
+    document.querySelectorAll('.theme-item').forEach(e => e.classList.remove('active'));
+    this.classList.add('active');
+    const bg = this.dataset.bg;
+    const forEditor = document.getElementById('theme-modal').dataset.forEditor === '1';
+    if (forEditor) { editorBg=bg; applyEditorBg(bg); saveCurrentNote(); }
+    else { currentBg=bg; document.getElementById('app').style.background=bg; document.getElementById('main-view').style.background=bg; }
+  });
+});
+document.getElementById('theme-close').addEventListener('click', () => document.getElementById('theme-modal').classList.remove('show'));
+document.getElementById('theme-modal').addEventListener('click', function(e) { if(e.target===this) this.classList.remove('show'); });
+
+// ===================== EXPORT =====================
+function showExportModal(target) {
+  exportTarget = target;
+  let titleStr = '';
+  if (target.type === 'note') {
+    const n = store.notes[target.id];
+    titleStr = '导出：' + (n.title || '无标题');
+  } else if (target.type === 'folder') {
+    titleStr = '导出文件夹内所有便签';
+  } else {
+    titleStr = '导出全部便签';
+  }
+  document.getElementById('export-modal-title').textContent = titleStr;
+  document.getElementById('export-modal').classList.add('show');
+}
+
+// Collect notes for export target
+function collectNotesForExport() {
+  if (!exportTarget) return [];
+  if (exportTarget.type === 'note') return [store.notes[exportTarget.id]].filter(Boolean);
+  if (exportTarget.type === 'folder') return collectFolderNotes(exportTarget.id);
+  if (exportTarget.type === 'all') {
+    return collectFolderNotes('root');
+  }
+  return [];
+}
+
+function collectFolderNotes(folderId) {
+  const folder = store.folders[folderId];
+  if (!folder) return [];
+  let notes = Object.values(store.notes).filter(n => n.parent === folderId);
+  (folder.children || []).forEach(cid => { notes = notes.concat(collectFolderNotes(cid)); });
+  return notes;
+}
+
+function downloadFile(filename, content, mimeType) {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function exportAsTxt(notes) {
+  let content = '';
+  notes.forEach((n, i) => {
+    if (i > 0) content += '\n\n' + '='.repeat(40) + '\n\n';
+    content += (n.title || '无标题') + '\n';
+    content += '时间：' + new Date(n.updated||n.created).toLocaleString('zh-CN') + '\n\n';
+    content += (n.content || '');
+  });
+  const name = notes.length === 1 ? (notes[0].title || '便签') : '手机分层便签导出';
+  downloadFile(name + '.txt', content, 'text/plain;charset=utf-8');
+  showToast('已导出 TXT 文件');
+}
+
+function exportAsMarkdown(notes) {
+  let content = '# 手机分层便签\n\n';
+  notes.forEach((n, i) => {
+    content += `## ${n.title || '无标题'}\n\n`;
+    content += `> 更新时间：${new Date(n.updated||n.created).toLocaleString('zh-CN')}\n\n`;
+    content += (n.content || '') + '\n\n';
+    if (i < notes.length - 1) content += '---\n\n';
+  });
+  const name = notes.length === 1 ? (notes[0].title || '便签') : '手机分层便签导出';
+  downloadFile(name + '.md', content, 'text/markdown;charset=utf-8');
+  showToast('已导出 Markdown 文件');
+}
+
+function exportAsHtml(notes) {
+  let body = '';
+  notes.forEach((n, i) => {
+    const lines = (n.content || '').split('\n').map(l => `<p>${escHtml(l) || '&nbsp;'}</p>`).join('');
+    body += `
+    <article class="note" style="margin-bottom:40px;page-break-after:always;">
+      <h2 style="font-size:22px;font-weight:700;margin-bottom:8px;color:#1A1A2E">${escHtml(n.title||'无标题')}</h2>
+      <div style="font-size:13px;color:#888;margin-bottom:16px">更新时间：${new Date(n.updated||n.created).toLocaleString('zh-CN')}</div>
+      <div style="font-size:15px;line-height:1.8;color:#333;background:${n.bg||'#fff'};padding:16px;border-radius:8px;">${lines}</div>
+    </article>`;
+    if (i < notes.length - 1) body += '<hr style="border:none;border-top:1px solid #eee;margin:32px 0">';
+  });
+  const html = `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>手机分层便签导出</title>
+<style>body{font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;max-width:800px;margin:40px auto;padding:20px;color:#1A1A2E;}h1{font-size:28px;font-weight:700;margin-bottom:8px;}
+@media print{article{page-break-after:always;}}</style>
+</head><body>
+<h1>手机分层便签</h1>
+<p style="color:#888;margin-bottom:32px">导出时间：${new Date().toLocaleString('zh-CN')}　共 ${notes.length} 篇</p>
+${body}
+</body></html>`;
+  const name = notes.length === 1 ? (notes[0].title || '便签') : '手机分层便签导出';
+  downloadFile(name + '.html', html, 'text/html;charset=utf-8');
+  showToast('已导出 HTML 文件');
+}
+
+function exportAsWord(notes) {
+  // Word-compatible HTML (application/msword)
+  let body = '';
+  notes.forEach((n, i) => {
+    const lines = (n.content || '').split('\n').map(l => `<p>${escHtml(l)||'&nbsp;'}</p>`).join('');
+    body += `<h2>${escHtml(n.title||'无标题')}</h2>
+<p style="color:gray;font-size:12px">更新时间：${new Date(n.updated||n.created).toLocaleString('zh-CN')}</p>
+${lines}`;
+    if (i < notes.length - 1) body += '<br><hr><br>';
+  });
+  const content = `<html xmlns:o="urn:schemas-microsoft-com:office:office"
+xmlns:w="urn:schemas-microsoft-com:office:word"
+xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="UTF-8">
+<title>手机分层便签</title>
+<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View></w:WordDocument></xml><![endif]-->
+<style>body{font-family:'微软雅黑','PingFang SC',sans-serif;font-size:12pt;line-height:1.8;}
+h1{font-size:18pt;}h2{font-size:14pt;}p{margin:0 0 6pt;}</style>
+</head><body>
+<h1>手机分层便签</h1>
+<p style="color:gray">导出时间：${new Date().toLocaleString('zh-CN')}　共 ${notes.length} 篇</p><br>
+${body}
+</body></html>`;
+  const name = notes.length === 1 ? (notes[0].title || '便签') : '手机分层便签导出';
+  downloadFile(name + '.doc', content, 'application/msword;charset=utf-8');
+  showToast('已导出 Word 文档（.doc）');
+}
+
+function exportAsBook(notes) {
+  // Same as HTML but styled like a book
+  let toc = '<nav><h2 style="margin-bottom:8px">目录</h2><ol>';
+  let body = '';
+  notes.forEach((n, i) => {
+    const id = 'note-' + i;
+    toc += `<li><a href="#${id}" style="color:var(--p)">${escHtml(n.title||'无标题')}</a></li>`;
+    const lines = (n.content||'').split('\n').map(l=>`<p>${escHtml(l)||'&nbsp;'}</p>`).join('');
+    body += `<article id="${id}" style="margin-bottom:60px;page-break-before:always">
+      <h2 style="font-size:24px;font-weight:700;margin-bottom:10px;border-bottom:2px solid #6C63FF;padding-bottom:8px">${escHtml(n.title||'无标题')}</h2>
+      <p style="color:#888;font-size:13px;margin-bottom:20px">第 ${i+1} 篇 · ${new Date(n.updated||n.created).toLocaleDateString('zh-CN')}</p>
+      <div style="font-size:15px;line-height:2;color:#333">${lines}</div>
+    </article>`;
+  });
+  toc += '</ol></nav><hr style="margin:32px 0">';
+  const html = `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8">
+<title>我的便签书</title>
+<style>:root{--p:#6C63FF}body{font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;max-width:760px;margin:40px auto;padding:24px;color:#1A1A2E;background:#FFFEF8}
+.cover{text-align:center;padding:80px 0;margin-bottom:40px;border-bottom:1px solid #eee}
+h1{font-size:36px;font-weight:700;color:var(--p)}
+a{text-decoration:none}a:hover{text-decoration:underline}
+@media print{article{page-break-before:always}}
+</style></head><body>
+<div class="cover">
+  <h1>手机分层便签</h1>
+  <p style="color:#888;margin-top:12px">共收录 ${notes.length} 篇笔记</p>
+  <p style="color:#aaa;font-size:13px;margin-top:8px">导出于 ${new Date().toLocaleDateString('zh-CN')}</p>
+</div>
+${toc}
+${body}
+</body></html>`;
+  downloadFile('我的便签书.html', html, 'text/html;charset=utf-8');
+  showToast('已导出合并成书（HTML）');
+}
+
+function exportAsPdf(notes) {
+  // Open a print-ready page in a new window
+  let body = '';
+  notes.forEach((n, i) => {
+    const lines = (n.content||'').split('\n').map(l=>`<p>${escHtml(l)||'&nbsp;'}</p>`).join('');
+    body += `<div style="page-break-after:always;padding:20px">
+      <h2 style="font-size:20px;font-weight:700;margin-bottom:8px">${escHtml(n.title||'无标题')}</h2>
+      <p style="color:#888;font-size:12px;margin-bottom:16px">更新时间：${new Date(n.updated||n.created).toLocaleString('zh-CN')}</p>
+      <div style="font-size:14px;line-height:1.8">${lines}</div>
+    </div>`;
+    if (i < notes.length - 1) body += '';
+  });
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>便签PDF导出</title>
+<style>body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;margin:0;padding:20px;color:#1A1A2E}
+@media print{@page{margin:20mm}button{display:none!important}}</style>
+</head><body>
+<button onclick="window.print()" style="position:fixed;top:12px;right:12px;background:#6C63FF;color:white;border:none;padding:10px 20px;border-radius:8px;font-size:14px;cursor:pointer;z-index:9">打印 / 保存为 PDF</button>
+${body}
+<script>setTimeout(()=>window.print(),600)</scr`+'ipt></body></html>';
+  const w = window.open('', '_blank', 'width=900,height=700');
+  if (w) { w.document.write(html); w.document.close(); showToast('已打开打印预览，选择"另存为PDF"'); }
+  else showToast('请允许弹出窗口以导出PDF');
+}
+
+document.getElementById('btn-export-all').addEventListener('click', () => {
+  showExportModal({ type: 'all' });
+});
+document.getElementById('btn-editor-export').addEventListener('click', () => {
+  if (currentNoteId) { saveCurrentNote(); showExportModal({ type: 'note', id: currentNoteId }); }
+});
+
+document.getElementById('exp-txt').addEventListener('click', () => { doExport('txt'); });
+document.getElementById('exp-word').addEventListener('click', () => { doExport('word'); });
+document.getElementById('exp-html').addEventListener('click', () => { doExport('html'); });
+document.getElementById('exp-md').addEventListener('click', () => { doExport('md'); });
+document.getElementById('exp-pdf').addEventListener('click', () => { doExport('pdf'); });
+document.getElementById('exp-book').addEventListener('click', () => { doExport('book'); });
+
+function doExport(format) {
+  const notes = collectNotesForExport();
+  if (notes.length === 0) { showToast('没有可导出的内容'); return; }
+  document.getElementById('export-modal').classList.remove('show');
+  if (format==='txt') exportAsTxt(notes);
+  else if (format==='word') exportAsWord(notes);
+  else if (format==='html') exportAsHtml(notes);
+  else if (format==='md') exportAsMarkdown(notes);
+  else if (format==='pdf') exportAsPdf(notes);
+  else if (format==='book') exportAsBook(notes);
+}
+
+document.getElementById('export-close').addEventListener('click', () => document.getElementById('export-modal').classList.remove('show'));
+document.getElementById('export-modal').addEventListener('click', function(e) { if(e.target===this) this.classList.remove('show'); });
+
+// ===================== SHARE =====================
+let shareNoteId = null;
+function showShareModal(noteId) {
+  shareNoteId = noteId;
+  const n = store.notes[noteId];
+  if (!n) return;
+  const preview = (n.title ? n.title + '\n' : '') + (n.content || '').slice(0, 100);
+  document.getElementById('share-preview-text').textContent = preview || '（空白便签）';
+  document.getElementById('share-modal').classList.add('show');
+}
+
+function getNoteShareText(noteId) {
+  const n = store.notes[noteId || shareNoteId];
+  if (!n) return '';
+  let text = '';
+  if (n.title) text += n.title + '\n\n';
+  text += (n.content || '') + '\n\n——来自 手机分层便签';
+  return text;
+}
+
+document.getElementById('btn-editor-share').addEventListener('click', () => {
+  if (currentNoteId) { saveCurrentNote(); showShareModal(currentNoteId); }
+});
+
+document.querySelectorAll('.share-app').forEach(el => {
+  el.addEventListener('click', function() {
+    const app = this.dataset.app;
+    const text = getNoteShareText();
+    const encoded = encodeURIComponent(text);
+    const note = store.notes[shareNoteId];
+    const title = note ? (note.title || '手机分层便签') : '手机分层便签';
+
+    let url = '';
+    if (app === 'wechat' || app === 'wechat-moments') {
+      // On mobile, attempt native share; on PC, copy to clipboard
+      if (navigator.share) {
+        navigator.share({ title, text }).then(() => showToast('已调起分享'));
+      } else {
+        copyToClipboard(text);
+        showToast('内容已复制，请粘贴到' + (app==='wechat'?'微信':'朋友圈'));
+      }
+    } else if (app === 'qq') {
+      url = 'https://connect.qq.com/widget/shareqq/index.html?title=' + encodeURIComponent(title) + '&summary=' + encoded;
+      tryOpenUrl(url, 'QQ', text);
+    } else if (app === 'feishu') {
+      copyToClipboard(text);
+      showToast('内容已复制，请粘贴到飞书');
+    } else if (app === 'dingding') {
+      url = 'dingtalk://dingtalkclient/page/link?url=' + encodeURIComponent('https://open.dingtalk.com/');
+      copyToClipboard(text);
+      showToast('内容已复制，请粘贴到钉钉');
+    } else if (app === 'weibo') {
+      url = 'https://service.weibo.com/share/share.php?title=' + encoded;
+      window.open(url, '_blank');
+    } else if (app === 'email') {
+      url = 'mailto:?subject=' + encodeURIComponent(title) + '&body=' + encoded;
+      window.location.href = url;
+    } else if (app === 'sms') {
+      url = 'sms:?body=' + encoded;
+      window.location.href = url;
+    }
+    document.getElementById('share-modal').classList.remove('show');
+  });
+});
+
+function tryOpenUrl(url, appName, fallbackText) {
+  try { window.open(url, '_blank'); showToast('已打开分享页面'); }
+  catch(e) { copyToClipboard(fallbackText); showToast('内容已复制，请手动分享到' + appName); }
+}
+
+document.getElementById('share-copy-btn').addEventListener('click', () => {
+  const text = getNoteShareText();
+  copyToClipboard(text);
+  document.getElementById('share-modal').classList.remove('show');
+});
+
+document.getElementById('share-close').addEventListener('click', () => document.getElementById('share-modal').classList.remove('show'));
+document.getElementById('share-modal').addEventListener('click', function(e) { if(e.target===this) this.classList.remove('show'); });
+
+function copyToClipboard(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(() => showToast('✓ 已复制到剪贴板'));
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('✓ 已复制到剪贴板');
+  }
+}
+
+// ===================== TOAST =====================
+let toastTimer = null;
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+// ===================== SEARCH =====================
+document.getElementById('search-input').addEventListener('input', function() { renderFileList(this.value.trim()); });
+
+// ===================== SORT =====================
+document.getElementById('btn-sort').addEventListener('click', () => {
+  sortOrder = sortOrder==='date'?'name':'date';
+  renderFileList();
+});
+
+// ===================== UTILS =====================
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+// ===================== PWA / SW =====================
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      console.log('SW registered:', reg);
+    }).catch(err => {
+      console.log('SW registration failed:', err);
+    });
+  });
+}
+
+// ===================== INIT =====================
+renderFileList();
+updateHeader();
+</script>
+</body>
+</html>

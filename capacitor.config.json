@@ -1,0 +1,8 @@
+{
+  "appId": "com.phonelayered.notes",
+  "appName": "分层便签",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}
