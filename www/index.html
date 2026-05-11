@@ -328,6 +328,8 @@
     flex: 1; border: none; background: transparent;
     font-size: 17px; font-weight: 700; color: var(--text);
     outline: none; font-family: inherit;
+    word-wrap: break-word; overflow-wrap: break-word;
+    white-space: normal; min-width: 0;
   }
   .note-title-input::placeholder { color: #bbb; }
 
@@ -1180,7 +1182,7 @@
 
 <script>
 // ===================== DATA STORE =====================
-const isCapacitor = typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform();
+function isCapacitor() { return typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform && Capacitor.isNativePlatform(); }
 
 const STORAGE_KEY = 'phone_notes_v2';
 const RECENT_KEY = 'chengshu_recent';
@@ -1782,7 +1784,8 @@ document.getElementById('btn-new-note').addEventListener('click', () => {
   const id = genId();
   store.notes[id] = {
     id, title: '', content: '', parent: currentFolderId,
-    created: Date.now(), updated: Date.now(), bg: '#FFFFFF',
+    created: Date.now(), updated: Date.now(),
+    bg: darkMode ? '#1A1A2E' : '#FFFFFF',
     fontFamily: "system-ui,-apple-system,'PingFang SC','Microsoft YaHei',sans-serif", fontSize: 15
   };
   saveStore();
@@ -1970,15 +1973,26 @@ function openNote(id) {
 }
 
 function applyEditorBg(color) {
+  // When dark mode is active and note has default white background, use dark
+  if (darkMode && (color === '#FFFFFF' || color === '#FFF' || color === '#ffffff')) {
+    color = '#1A1A2E';
+  }
   const area = document.getElementById('editor-bg-area');
   const header = document.querySelector('#editor-view .editor-header');
   const toolbar = document.getElementById('editor-toolbar');
   const findBar = document.getElementById('find-replace-bar');
+  const status = document.getElementById('editor-status-bar');
   area.style.background = color;
-  header.style.background = color;
-  toolbar.style.background = color;
-  findBar.style.background = color;
+  if (header) header.style.background = color;
+  if (toolbar) toolbar.style.background = color;
+  if (findBar) findBar.style.background = color;
+  if (status) status.style.background = color;
   document.getElementById('editor-view').style.background = color;
+  // Update note-content color for dark mode
+  const content = document.getElementById('note-content');
+  if (content) {
+    content.style.color = darkMode ? '#E4E4F0' : '#1A1A2E';
+  }
 }
 
 function closeEditor() {
@@ -2392,7 +2406,7 @@ function collectFolderNotes(folderId) {
 }
 
 async function downloadFile(filename, content, mimeType) {
-  if (isCapacitor) {
+  if (isCapacitor()) {
     try {
       const { Filesystem, Directory } = Capacitor.Plugins;
       const base64 = btoa(unescape(encodeURIComponent(content)));
@@ -2620,7 +2634,7 @@ document.querySelectorAll('.share-app').forEach(el => {
     const title = note ? (note.title || '成书笔记') : '成书笔记';
 
     if (app === 'wechat' || app === 'wechat-moments') {
-      if (isCapacitor) {
+      if (isCapacitor()) {
         try {
           const { Share } = Capacitor.Plugins;
           Share.share({ title, text }).then(() => showToast('已分享')).catch(() => { copyToClipboard(text); showToast('内容已复制，请打开微信粘贴'); });
@@ -2729,6 +2743,14 @@ btnDarkMode.addEventListener('click', () => {
   document.body.classList.toggle('dark', darkMode);
   localStorage.setItem('chengshu_dark', darkMode ? '1' : '0');
   btnDarkMode.textContent = darkMode ? '☀️' : '🌙';
+  // Update editor background if open
+  if (currentNoteId) {
+    const note = store.notes[currentNoteId];
+    if (note) applyEditorBg(note.bg || (darkMode ? '#1A1A2E' : '#FFFFFF'));
+  }
+  // Also update note-content color
+  const content = document.getElementById('note-content');
+  if (content) content.style.color = darkMode ? '#E4E4F0' : '#1A1A2E';
 });
 
 // ===================== FOCUS MODE =====================

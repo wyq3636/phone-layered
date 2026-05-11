@@ -33,6 +33,13 @@ jobs:
     - name: Sync web assets to Android
       run: npx cap sync android
 
+    - name: Configure Android permissions
+      run: |
+        # Add storage permission for file export
+        sed -i 's|<uses-permission android:name="android.permission.INTERNET" />|<uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />\n    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />|' android/app/src/main/AndroidManifest.xml
+        # Add requestLegacyExternalStorage for Android 10 compatibility
+        sed -i 's|<application|<application android:requestLegacyExternalStorage="true"|' android/app/src/main/AndroidManifest.xml
+
     - name: Generate App Icons
       run: |
         sudo apt-get update -qq && sudo apt-get install -y -qq librsvg2-bin
