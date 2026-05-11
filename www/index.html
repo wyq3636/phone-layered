@@ -8,7 +8,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="分层便签">
 <link rel="manifest" href="manifest.json">
-<title>手机分层便签</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%23FFD700'/%3E%3Cstop offset='100%25' stop-color='%23FF8C00'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='100' fill='%231A1A2E'/%3E%3Cpath d='M120 160 h272 q20 0 20 20 v200 q0 20-20 20 H140 q-20 0-20-20 Z' fill='%23F5F0E0'/%3E%3Cpath d='M280 160 v240' fill='none' stroke='%23DDD' stroke-width='2'/%3E%3Cline x1='150' y1='200' x2='260' y2='200' stroke='%23CCC' stroke-width='3'/%3E%3Cline x1='150' y1='240' x2='260' y2='240' stroke='%23CCC' stroke-width='3'/%3E%3Cline x1='150' y1='280' x2='260' y2='280' stroke='%23CCC' stroke-width='3'/%3E%3Cline x1='150' y1='320' x2='220' y2='320' stroke='%23CCC' stroke-width='3'/%3E%3Cpath d='M300 140 l15-50 l15 50 h-30Z' fill='url(%23g)' stroke='%23C8A200' stroke-width='2'/%3E%3Cpath d='M310 140 q5 120 3 240' stroke='url(%23g)' stroke-width='12' stroke-linecap='round'/%3E%3Cpath d='M308 368 q20-2 18 16 q-3 14-15 10' fill='url(%23g)'/%3E%3Ccircle cx='380' cy='300' r='20' fill='none' stroke='%23FFD700' stroke-width='4' opacity='0.5'/%3E%3Ccircle cx='380' cy='300' r='12' fill='none' stroke='%23FFD700' stroke-width='3' opacity='0.4'/%3E%3Ccircle cx='380' cy='300' r='5' fill='%23FFD700' opacity='0.6'/%3E%3Ctext x='256' y='480' text-anchor='middle' font-size='28' font-family='serif' fill='%23FFD700' opacity='0.8' font-style='italic'%3E%E2%9C%8D%3C/text%3E%3C/svg%3E">
+<title>成书笔记</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
@@ -22,7 +23,47 @@
     --border: #E8E8ED;
     --radius: 12px;
     --folder-color: #FFB347;
+    --highlight: #FFEB3B;
   }
+
+  /* DARK MODE */
+  body.dark #app {
+    --primary: #8B83FF;
+    --primary-light: #252240;
+    --surface: #1C1C2A;
+    --bg: #111118;
+    --text: #E4E4F0;
+    --text-muted: #8888B0;
+    --border: #2E2E42;
+  }
+  body.dark .status-bar, body.dark .app-header, body.dark .breadcrumb,
+  body.dark .search-bar, body.dark .editor-header, body.dark .editor-toolbar,
+  body.dark .editor-status, body.dark .find-replace-bar { background: var(--surface); }
+  body.dark #app, body.dark #main-view, body.dark #editor-view { background: var(--bg); }
+  body.dark .file-item { background: var(--surface); border-color: var(--border); }
+  body.dark .file-item:active { background: var(--primary-light); }
+  body.dark .btn-back, body.dark .btn-icon { background: var(--primary-light); color: var(--primary); }
+  body.dark .btn-icon.active-view { background: var(--primary); color: white; }
+  body.dark .tb-btn { background: var(--surface); border-color: var(--border); color: var(--text); }
+  body.dark .tb-btn:active, body.dark .tb-btn.active { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
+  body.dark .tb-select { background: var(--surface); border-color: var(--border); color: var(--text); }
+  body.dark .tb-color-btn { border-color: var(--border); }
+  body.dark #note-content { background: transparent; color: var(--text); }
+  body.dark .modal-sheet { background: var(--surface); }
+  body.dark .modal-input { background: var(--bg); color: var(--text); border-color: var(--border); }
+  body.dark .modal-btn.cancel { background: var(--bg); color: var(--text); }
+  body.dark .fr-btn { background: var(--surface); border-color: var(--border); color: var(--text); }
+  body.dark .find-replace-bar input { background: var(--bg); color: var(--text); border-color: var(--border); }
+  body.dark .search-input { background: var(--bg); color: var(--text); }
+  body.dark .ctx-menu { background: var(--surface); box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+  body.dark .ctx-item:hover { background: var(--bg); }
+  body.dark .export-item { background: var(--bg); border-color: var(--border); }
+  body.dark .share-copy-area { background: var(--bg); }
+  body.dark .bc-current { color: var(--text); }
+  body.dark .export-path-row { background: var(--bg); }
+  body.dark .toast { background: rgba(255,255,255,0.15); }
+  body.dark #note-content:empty::before { color: #666; }
+  body.dark .file-list mark, body.dark .item-name mark, body.dark .item-meta mark { color: #111; }
 
   html, body {
     height: 100%;
@@ -42,6 +83,15 @@
     position: relative;
     overflow: hidden;
     box-shadow: 0 0 40px rgba(0,0,0,0.15);
+  }
+
+  /* FIX: main-view must be flex column so file-list can scroll */
+  #main-view {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    position: relative;
   }
 
   .status-bar {
@@ -100,8 +150,10 @@
     display: flex; align-items: center; justify-content: center;
     color: var(--primary);
     transition: background 0.15s;
+    position: relative;
   }
   .btn-icon:active { background: var(--primary-light); }
+  .btn-icon.active-view { background: var(--primary); color: white; }
 
   .breadcrumb {
     display: flex;
@@ -130,6 +182,7 @@
   .file-list {
     flex: 1;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     padding: 12px;
     display: flex;
     flex-direction: column;
@@ -137,6 +190,26 @@
   }
   .file-list::-webkit-scrollbar { width: 4px; }
   .file-list::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+
+  /* GRID MODE */
+  .file-list.grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .file-list.grid .file-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 10px 12px;
+    min-height: 80px;
+  }
+  .file-list.grid .item-icon { font-size: 22px; width: auto; }
+  .file-list.grid .item-name { font-size: 13px; }
+  .file-list.grid .item-meta { font-size: 11px; }
+  .file-list.grid .item-actions {
+    position: absolute; top: 4px; right: 6px; font-size: 16px;
+  }
 
   .file-item {
     display: flex;
@@ -167,6 +240,16 @@
     cursor: pointer; color: var(--text-muted);
   }
   .item-actions:active { opacity: 1; }
+
+  /* SEARCH HIGHLIGHT - bright yellow for main list */
+  .file-list mark, .item-name mark, .item-meta mark {
+    background: #FFEB3B;
+    color: #1A1A2E;
+    border-radius: 2px;
+    padding: 1px 3px;
+    font-weight: 600;
+  }
+  .file-list.grid .item-name mark { font-size: 13px; }
 
   .empty-state {
     display: flex; flex-direction: column; align-items: center;
@@ -207,6 +290,27 @@
   }
   .fab-main:active { transform: scale(0.92); }
   .fab-main.open { transform: rotate(45deg); }
+
+  /* QUICK BACK BUTTON - bottom right for thumb reach */
+  .quick-back {
+    position: absolute;
+    bottom: 100px;
+    right: 20px;
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.55);
+    border: none;
+    color: white;
+    font-size: 22px;
+    cursor: pointer;
+    display: none;
+    align-items: center; justify-content: center;
+    z-index: 9;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.2);
+    transition: all 0.15s;
+  }
+  .quick-back.show { display: flex; }
+  .quick-back:active { transform: scale(0.9); background: var(--primary); }
 
   /* EDITOR */
   #editor-view {
@@ -268,9 +372,67 @@
   #note-content {
     width: 100%; height: 100%; border: none; outline: none;
     padding: 16px; font-size: 15px; line-height: 1.7; color: var(--text);
-    background: transparent; font-family: inherit; resize: none; overflow-y: auto;
+    background: transparent; font-family: inherit; overflow-y: auto;
+    white-space: pre-wrap; word-wrap: break-word;
   }
-  #note-content::placeholder { color: #bbb; }
+  #note-content:empty::before {
+    content: '开始书写你的想法…';
+    color: #bbb;
+  }
+  /* Highlight matches in editor (like WPS) */
+  #note-content mark {
+    background: #FFEB3B;
+    color: #1A1A2E;
+    border-radius: 2px;
+    padding: 0 1px;
+  }
+  #note-content mark.current {
+    background: #FF6B35;
+    color: white;
+    border-radius: 2px;
+    padding: 0 1px;
+  }
+
+  /* FIND & REPLACE */
+  .find-replace-bar {
+    display: none;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .find-replace-bar.show { display: flex; }
+  .find-replace-bar input {
+    height: 32px;
+    padding: 0 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-size: 13px;
+    background: var(--bg);
+    color: var(--text);
+    outline: none;
+    font-family: inherit;
+    min-width: 80px;
+    flex: 1;
+  }
+  .find-replace-bar input:focus { border-color: var(--primary); }
+  .fr-btn {
+    height: 32px;
+    padding: 0 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    font-size: 12px;
+    cursor: pointer;
+    color: var(--text);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .fr-btn:active { background: var(--primary-light); }
+  .fr-count { font-size: 12px; color: var(--text-muted); min-width: 40px; text-align: center; flex-shrink: 0; }
 
   .editor-status {
     padding: 6px 16px; font-size: 12px; color: var(--text-muted);
@@ -334,7 +496,9 @@
   .ctx-menu {
     display: none; position: absolute; background: var(--surface);
     border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.15);
-    z-index: 60; overflow: hidden; min-width: 160px;
+    z-index: 60; min-width: 160px;
+    max-height: 70vh; overflow-y: auto; overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
   }
   .ctx-menu.show { display: block; }
   .ctx-item {
@@ -495,6 +659,150 @@
     margin-bottom: 10px;
     margin-top: 4px;
   }
+
+  /* Line-height control */
+  .line-height-ctrl { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+  .line-height-ctrl button {
+    width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border);
+    background: var(--surface); font-size: 16px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text); font-weight: 700; flex-shrink: 0;
+  }
+  .line-height-ctrl button:active { background: var(--primary-light); }
+  .line-height-val { font-size: 12px; color: var(--text); min-width: 22px; text-align: center; }
+
+  /* FOCUS MODE - hide all chrome, full-screen writing */
+  #editor-view.focus .editor-header,
+  #editor-view.focus .editor-toolbar,
+  #editor-view.focus .find-replace-bar,
+  #editor-view.focus .editor-status,
+  #editor-view.focus #editor-quick-back { display: none !important; }
+  #editor-view.focus .editor-area { padding-top: 20px; }
+  .focus-exit {
+    display: none;
+    position: fixed; top: 10px; right: 16px;
+    width: 34px; height: 34px; border-radius: 50%;
+    background: rgba(128,128,128,0.3); border: none; color: #ccc;
+    font-size: 16px; cursor: pointer; z-index: 30;
+    align-items: center; justify-content: center;
+  }
+  #editor-view.focus .focus-exit { display: flex; }
+
+  /* EXPORT PATH ROW */
+  .export-path-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 14px;
+    font-size: 13px;
+    color: var(--text-muted);
+    word-break: break-all;
+  }
+  .export-path-row .path-icon { font-size: 20px; flex-shrink: 0; }
+
+  /* ===== 2.1 NEW STYLES ===== */
+
+  /* RECENT SECTION */
+  .recent-section { padding: 4px 12px 0; flex-shrink: 0; }
+  .recent-label { font-size: 11px; color: var(--text-muted); font-weight: 600; margin-bottom: 4px; letter-spacing: 0.5px; }
+  .recent-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+  .recent-scroll::-webkit-scrollbar { display: none; }
+  .recent-chip {
+    flex-shrink: 0; padding: 6px 12px; border-radius: 16px;
+    background: var(--surface); border: 1px solid var(--border);
+    font-size: 12px; color: var(--text); cursor: pointer;
+    white-space: nowrap; max-width: 140px; overflow: hidden; text-overflow: ellipsis;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .recent-chip:active { background: var(--primary-light); }
+
+  /* PINNED */
+  .file-item.pinned { border-left: 3px solid #FFD700 !important; }
+  .pin-badge { font-size: 12px; margin-left: 4px; flex-shrink: 0; }
+
+  /* SWIPE */
+  .file-item-wrap { position: relative; overflow: hidden; border-radius: var(--radius); flex-shrink: 0; }
+  .swipe-actions {
+    position: absolute; right: 0; top: 0; bottom: 0;
+    display: flex; align-items: stretch; z-index: 0;
+    border-radius: 0 var(--radius) var(--radius) 0; overflow: hidden;
+  }
+  .swipe-act {
+    width: 56px; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 2px; cursor: pointer;
+    border: none; color: white; font-size: 10px; font-family: inherit;
+  }
+  .swipe-act:active { opacity: 0.85; }
+  .swipe-pin { background: #FFB347; }
+  .swipe-move { background: #6C63FF; }
+  .swipe-share { background: #4CAF50; }
+  .swipe-delete { background: #E24B4A; }
+  .swipe-act-icon { font-size: 18px; }
+  .file-item-inner { position: relative; z-index: 1; transition: transform 0.2s ease; }
+  .file-item-inner .file-item { margin: 0; }
+
+  /* GOAL BAR */
+  .goal-bar {
+    margin: 0 12px 8px; padding: 8px 12px;
+    background: var(--surface); border-radius: 10px;
+    border: 1px solid var(--border); flex-shrink: 0;
+    display: flex; align-items: center; gap: 10px;
+    font-size: 12px; color: var(--text-muted);
+  }
+  .goal-track { flex: 1; height: 6px; border-radius: 3px; background: var(--bg); overflow: hidden; }
+  .goal-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #6C63FF, #FFB347); transition: width 0.5s ease; }
+  .goal-set { color: var(--primary); font-weight: 600; cursor: pointer; font-size: 12px; }
+  .goal-set:active { opacity: 0.7; }
+
+  /* MOVE FOLDER DIALOG */
+  .folder-pick-list { max-height: 240px; overflow-y: auto; margin-bottom: 12px; }
+  .folder-pick-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+    border-radius: 10px; cursor: pointer; font-size: 14px; color: var(--text);
+  }
+  .folder-pick-item:active { background: var(--primary-light); }
+  .folder-pick-item .fp-icon { font-size: 22px; flex-shrink: 0; }
+  .folder-pick-item .fp-name { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+  /* GOAL INPUT */
+  .goal-input-row { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
+  .goal-input-row input {
+    flex: 1; padding: 10px 14px; border-radius: 10px;
+    border: 1px solid var(--border); font-size: 15px; color: var(--text);
+    background: var(--bg); outline: none; font-family: inherit; text-align: center;
+  }
+  .goal-input-row input:focus { border-color: var(--primary); }
+
+  /* SELECTION MODE */
+  .select-checkbox {
+    width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+    flex-shrink: 0; margin-right: 10px; display: none; align-items: center; justify-content: center;
+    transition: all 0.2s; font-size: 12px; color: white; background: var(--bg);
+  }
+  body.select-mode .select-checkbox { display: flex; }
+  body.select-mode .file-item-inner { pointer-events: none; }
+  body.select-mode .item-actions { display: none; }
+  .select-checkbox.checked { background: var(--primary); border-color: var(--primary); }
+  .select-bar {
+    position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface);
+    border-top: 1px solid var(--border); padding: 12px 16px; z-index: 50;
+    display: none; align-items: center; gap: 12px;
+    box-shadow: 0 -4px 16px rgba(0,0,0,0.08);
+  }
+  body.select-mode .select-bar { display: flex; }
+  .select-bar .sel-count { flex:1; font-size:14px; color:var(--text); font-weight:500; }
+  .select-bar .sel-btn {
+    padding: 10px 20px; border-radius: 10px; border: none; font-size: 14px;
+    font-weight: 600; cursor: pointer; font-family: inherit;
+  }
+  .select-bar .sel-btn.primary { background: var(--primary); color: white; }
+  .select-bar .sel-btn.cancel { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+  .select-bar .sel-btn:active { opacity: 0.7; }
+  .select-bar .sel-btn:disabled { opacity: 0.4; pointer-events: none; }
+  body.select-mode .fab-container { display: none; }
 </style>
 </head>
 <body>
@@ -513,11 +821,13 @@
   <div id="main-view">
     <div class="app-header">
       <button class="btn-back" id="btn-back" style="visibility:hidden">‹</button>
-      <span class="header-title" id="header-title">手机分层便签</span>
+      <span class="header-title" id="header-title">成书笔记</span>
       <div class="header-actions">
+        <button class="btn-icon" id="btn-dark-mode" title="暗色模式">🌙</button>
+        <button class="btn-icon" id="btn-grid-toggle" title="网格/列表切换">⊞</button>
         <button class="btn-icon" id="btn-export-all" title="导出全部">📤</button>
         <button class="btn-icon" id="btn-theme" title="背景主题">🎨</button>
-        <button class="btn-icon" id="btn-sort" title="排序">⇅</button>
+        <button class="btn-icon" id="btn-sort" title="排序" style="font-size:12px;width:auto;padding:0 10px;border-radius:16px;">按时间</button>
       </div>
     </div>
 
@@ -532,7 +842,24 @@
       </div>
     </div>
 
+    <!-- RECENT NOTES -->
+    <div class="recent-section" id="recent-section">
+      <div class="recent-label">🕐 最近打开</div>
+      <div class="recent-scroll" id="recent-scroll"></div>
+    </div>
+
+    <!-- WRITING GOAL -->
+    <div class="goal-bar" id="goal-bar">
+      <span>📝 今日写作</span>
+      <span id="goal-text">0 / 0 字</span>
+      <div class="goal-track"><div class="goal-fill" id="goal-fill" style="width:0%"></div></div>
+      <span class="goal-set" id="goal-set-btn">设定目标</span>
+    </div>
+
     <div class="file-list" id="file-list"></div>
+
+    <!-- QUICK BACK BUTTON - thumb-friendly bottom-right -->
+    <button class="quick-back" id="quick-back" title="返回上级">‹</button>
 
     <!-- FAB -->
     <div class="fab-container">
@@ -548,6 +875,13 @@
       </div>
       <button class="fab-main" id="fab-main">+</button>
     </div>
+
+    <!-- SELECTION BAR -->
+    <div class="select-bar" id="select-bar">
+      <span class="sel-count" id="sel-count">已选 0 项</span>
+      <button class="sel-btn cancel" id="sel-cancel">取消</button>
+      <button class="sel-btn primary" id="sel-export" disabled>导出选中</button>
+    </div>
   </div>
 
   <!-- EDITOR VIEW -->
@@ -556,11 +890,27 @@
       <button class="btn-back" id="editor-back">‹</button>
       <input class="note-title-input" id="note-title" placeholder="无标题" autocomplete="off">
       <div class="header-actions">
+        <button class="btn-icon" id="btn-focus-mode" title="专注模式">⊡</button>
+        <button class="btn-icon" id="btn-ocr" title="识文取字">📷</button>
+        <button class="btn-icon" id="btn-find-replace" title="查找替换">🔍</button>
         <button class="btn-icon" id="btn-note-theme" title="背景">🎨</button>
         <button class="btn-icon" id="btn-editor-export" title="导出">📤</button>
         <button class="btn-icon" id="btn-editor-share" title="分享">↗</button>
         <button class="btn-icon" id="btn-save" title="保存">💾</button>
+        <input type="file" id="ocr-file-input" accept="image/*" capture="environment" style="display:none">
       </div>
+    </div>
+
+    <!-- FIND & REPLACE BAR -->
+    <div class="find-replace-bar" id="find-replace-bar">
+      <input type="text" id="fr-find" placeholder="查找文字…">
+      <input type="text" id="fr-replace" placeholder="替换为…">
+      <button class="fr-btn" id="fr-prev">◀</button>
+      <button class="fr-btn" id="fr-next">▶</button>
+      <span class="fr-count" id="fr-count"></span>
+      <button class="fr-btn" id="fr-replace-one">替换</button>
+      <button class="fr-btn" id="fr-replace-all">全部替换</button>
+      <button class="fr-btn" id="fr-close" style="color:#E24B4A">✕</button>
     </div>
 
     <div class="editor-toolbar" id="editor-toolbar">
@@ -581,6 +931,14 @@
         <button id="font-dec">－</button>
         <span class="font-size-val" id="font-size-val">15</span>
         <button id="font-inc">＋</button>
+      </div>
+
+      <div class="toolbar-sep"></div>
+
+      <div class="toolbar-section line-height-ctrl">
+        <button id="line-h-dec">↕</button>
+        <span class="line-height-val" id="line-height-val">1.7</span>
+        <button id="line-h-inc">↕</button>
       </div>
 
       <div class="toolbar-sep"></div>
@@ -612,13 +970,19 @@
     </div>
 
     <div class="editor-area" id="editor-bg-area">
-      <textarea id="note-content" placeholder="开始书写你的想法…"></textarea>
+      <div id="note-content" contenteditable="true"></div>
     </div>
 
     <div class="editor-status">
-      <span id="word-count">0 字</span>
-      <span id="save-status">未保存</span>
+      <span id="editor-info" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">0 字</span>
+      <span id="save-status" style="flex-shrink:0;margin-left:8px;">未保存</span>
     </div>
+
+    <!-- FOCUS EXIT BUTTON -->
+    <button class="focus-exit" id="focus-exit" title="退出专注模式">✕</button>
+
+    <!-- EDITOR QUICK BACK -->
+    <button class="quick-back show" id="editor-quick-back" title="返回列表" style="bottom:20px;right:24px;z-index:21;">←</button>
   </div>
 
   <!-- THEME MODAL -->
@@ -657,6 +1021,11 @@
   <!-- CONTEXT MENU -->
   <div class="ctx-menu" id="ctx-menu">
     <div class="ctx-item" id="ctx-rename">✏️ 重命名</div>
+    <div class="ctx-item" id="ctx-pin" style="display:none">📌 置顶/取消</div>
+    <div class="ctx-item" id="ctx-move" style="display:none">📁 移动到…</div>
+    <div class="ctx-item" id="ctx-moveup" style="display:none">⬆ 上移</div>
+    <div class="ctx-item" id="ctx-movedown" style="display:none">⬇ 下移</div>
+    <div class="ctx-sep"></div>
     <div class="ctx-item" id="ctx-export">📤 导出</div>
     <div class="ctx-item" id="ctx-share">↗ 分享</div>
     <div class="ctx-sep"></div>
@@ -679,6 +1048,9 @@
   <div class="modal-overlay" id="export-modal">
     <div class="modal-sheet">
       <div class="modal-title" id="export-modal-title">导出便签</div>
+      <div class="export-select-row" id="export-select-row" style="display:flex">
+        <button class="export-select-btn" id="export-select-btn" style="flex:1;padding:10px;border-radius:10px;border:1px dashed var(--primary);background:var(--primary-light);color:var(--primary);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">📋 选择导出（可勾选文件夹和笔记）</button>
+      </div>
       <div class="modal-section-title">选择导出格式</div>
       <div class="export-grid">
         <div class="export-item" id="exp-txt">
@@ -712,6 +1084,10 @@
           <span class="export-desc">多篇合一文档</span>
         </div>
       </div>
+      <div class="export-path-row">
+        <span class="path-icon">📁</span>
+        <span>文件将保存到：手机存储/Download 文件夹</span>
+      </div>
       <button class="modal-btn cancel" id="export-close" style="width:100%">取消</button>
     </div>
   </div>
@@ -721,7 +1097,7 @@
     <div class="modal-sheet">
       <div class="modal-title">分享便签</div>
       <div class="share-copy-area" id="share-preview-text">便签内容预览…</div>
-      <div class="modal-section-title">分享到应用</div>
+      <div class="modal-section-title">分享方式</div>
       <div class="share-apps">
         <div class="share-app" data-app="wechat">
           <div class="share-app-icon" style="background:#07C160">💬</div>
@@ -761,6 +1137,42 @@
     </div>
   </div>
 
+  <!-- MOVE TO FOLDER MODAL -->
+  <div class="modal-overlay" id="move-modal">
+    <div class="modal-sheet">
+      <div class="modal-title">移动到文件夹</div>
+      <div class="folder-pick-list" id="folder-pick-list"></div>
+      <button class="modal-btn cancel" id="move-cancel" style="width:100%">取消</button>
+    </div>
+  </div>
+
+  <!-- OCR PROGRESS -->
+  <div class="modal-overlay" id="ocr-progress-overlay">
+    <div class="modal-sheet" style="text-align:center">
+      <div style="font-size:40px;margin-bottom:12px">📷</div>
+      <div class="modal-title">正在识别文字…</div>
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px" id="ocr-progress-text">准备中…</div>
+      <div style="height:6px;border-radius:3px;background:var(--bg);overflow:hidden">
+        <div id="ocr-progress-bar" style="height:100%;width:0%;background:var(--primary);border-radius:3px;transition:width 0.3s"></div>
+      </div>
+      <button class="modal-btn cancel" id="ocr-cancel" style="width:100%;margin-top:14px">取消</button>
+    </div>
+  </div>
+
+  <!-- GOAL MODAL -->
+  <div class="modal-overlay" id="goal-modal">
+    <div class="modal-sheet">
+      <div class="modal-title">设定每日写作目标</div>
+      <div class="goal-input-row">
+        <input type="number" id="goal-input" placeholder="输入目标字数" min="100" step="100" inputmode="numeric">
+      </div>
+      <div class="modal-btns">
+        <button class="modal-btn cancel" id="goal-cancel">取消</button>
+        <button class="modal-btn confirm" id="goal-confirm">设定</button>
+      </div>
+    </div>
+  </div>
+
   <!-- TOAST -->
   <div class="toast" id="toast"></div>
 
@@ -769,6 +1181,8 @@
 <script>
 // ===================== DATA STORE =====================
 const STORAGE_KEY = 'phone_notes_v2';
+const RECENT_KEY = 'chengshu_recent';
+const GOAL_KEY = 'chengshu_goal';
 let store = loadStore();
 let currentFolderId = 'root';
 let currentBg = '#FFFFFF';
@@ -776,10 +1190,24 @@ let editorBg = '#FFFFFF';
 let currentNoteId = null;
 let fabOpen = false;
 let currentFontSize = 15;
+let currentLineHeight = 1.7;
 let contextTarget = null;
 let nameModalMode = 'folder';
-let sortOrder = 'date';
-let exportTarget = null; // { type: 'note'|'folder'|'all', id }
+let sortOrder = localStorage.getItem('chengshu_sort') || 'date';
+
+// Set initial button text
+(function() {
+  const btn = document.getElementById('btn-sort');
+  if (btn) btn.textContent = sortOrder === 'date' ? '按时间' : '按名称';
+})();
+let exportTarget = null;
+let gridMode = false;
+let darkMode = false;
+let dailyGoal = parseInt(localStorage.getItem(GOAL_KEY) || '0');
+let moveTargetId = null; // note being moved
+let swipeOpen = null; // currently swiped item wrapper
+let selectMode = false;
+let selectedItems = {}; // key: "type:id" -> true
 
 function loadStore() {
   try {
@@ -791,9 +1219,7 @@ function loadStore() {
     notes: {}
   };
 }
-function saveStore() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
-}
+function saveStore() { localStorage.setItem(STORAGE_KEY, JSON.stringify(store)); }
 
 // ===================== CLOCK =====================
 function updateClock() {
@@ -817,16 +1243,23 @@ function getChildren(folderId) {
 function formatDate(ts) {
   if (!ts) return '';
   const d = new Date(ts);
-  const now = new Date();
-  const diff = now - d;
-  if (diff < 60000) return '刚刚';
-  if (diff < 3600000) return Math.floor(diff/60000) + '分钟前';
-  if (diff < 86400000) return Math.floor(diff/3600000) + '小时前';
-  return (d.getMonth()+1) + '/' + d.getDate();
+  const M = (d.getMonth()+1).toString().padStart(2,'0');
+  const D = d.getDate().toString().padStart(2,'0');
+  const h = d.getHours().toString().padStart(2,'0');
+  const m = d.getMinutes().toString().padStart(2,'0');
+  return M + '/' + D + ' ' + h + ':' + m;
+}
+
+function highlightText(text, query) {
+  if (!query || !text) return escHtml(text);
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = new RegExp('(' + escaped + ')', 'gi');
+  return escHtml(text).replace(re, '<mark>$1</mark>');
 }
 
 function renderFileList(searchQuery = '') {
   const list = document.getElementById('file-list');
+  list.classList.toggle('grid', gridMode);
   const { folders, notes } = getChildren(currentFolderId);
   let items = [];
   folders.forEach(f => {
@@ -838,6 +1271,39 @@ function renderFileList(searchQuery = '') {
       items.push({ type:'note', data:n });
   });
 
+  // Sort: pinned first, then order (if set), then date/name
+  if (!searchQuery) {
+    items.sort((a, b) => {
+      const aPinned = a.data.pinned ? 0 : 1;
+      const bPinned = b.data.pinned ? 0 : 1;
+      if (aPinned !== bPinned) return aPinned - bPinned;
+      const aHasOrder = a.data.order != null;
+      const bHasOrder = b.data.order != null;
+      if (aHasOrder && bHasOrder) return a.data.order - b.data.order;
+      if (aHasOrder && !bHasOrder) return -1;
+      if (!aHasOrder && bHasOrder) return 1;
+      // No order on either: folders first, then date/name
+      if (a.type !== b.type) return a.type === 'folder' ? -1 : 1;
+      if (sortOrder === 'date') {
+        const da = a.data.updated || a.data.created || 0;
+        const db = b.data.updated || b.data.created || 0;
+        if (da !== db) return db - da;
+      }
+      return (a.data.name || a.data.title || '').localeCompare(b.data.name || b.data.title || '', 'zh-CN', { numeric: true });
+    });
+  } else {
+    // When searching, still sort
+    items.sort((a, b) => {
+      const da = a.data.updated || a.data.created || 0;
+      const db = b.data.updated || b.data.created || 0;
+      return db - da;
+    });
+  }
+
+  // Render recent + goal
+  renderRecent();
+  updateGoalBar();
+
   if (items.length === 0) {
     list.innerHTML = `<div class="empty-state">
       <div class="empty-icon">${searchQuery ? '🔍' : '📂'}</div>
@@ -847,43 +1313,132 @@ function renderFileList(searchQuery = '') {
     return;
   }
 
-  list.innerHTML = items.map(item => {
+  let html = '';
+  items.forEach(item => {
     if (item.type === 'folder') {
-      return `<div class="file-item folder" data-id="${item.data.id}" data-type="folder">
-        <div class="item-icon">📁</div>
-        <div class="item-info">
-          <div class="item-name">${escHtml(item.data.name)}</div>
-          <div class="item-meta">${item.count} 项内容</div>
+      const fPinned = item.data.pinned;
+      const fPinClass = fPinned ? ' pinned' : '';
+      const fKey = 'folder:' + item.data.id;
+      const fChecked = selectedItems[fKey] ? ' checked' : '';
+      html += `<div class="file-item-wrap" data-id="${item.data.id}" data-type="folder" data-key="${fKey}">
+        <div class="swipe-actions">
+          <div class="swipe-act swipe-pin" data-pin="${item.data.id}"><span class="swipe-act-icon">${fPinned ? '📍' : '📌'}</span>${fPinned ? '取消' : '置顶'}</div>
+          <div class="swipe-act swipe-delete" data-del="${item.data.id}"><span class="swipe-act-icon">🗑</span>删除</div>
         </div>
-        <span class="item-actions" data-ctx="${item.data.id}" data-ctx-type="folder">⋯</span>
+        <div class="file-item-inner">
+          <span class="select-checkbox${fChecked}" data-key="${fKey}">✓</span>
+          <div class="file-item folder${fPinClass}" data-id="${item.data.id}" data-type="folder">
+            <div class="item-icon">📁</div>
+            <div class="item-info">
+              <div class="item-name">${searchQuery ? highlightText(item.data.name, searchQuery) : escHtml(item.data.name)}${fPinned ? '<span class="pin-badge">📌</span>' : ''}</div>
+              <div class="item-meta">${item.count} 项内容</div>
+            </div>
+            <span class="item-actions" data-ctx="${item.data.id}" data-ctx-type="folder">⋯</span>
+          </div>
+        </div>
       </div>`;
     } else {
       const n = item.data;
-      const preview = n.content ? n.content.replace(/\n/g,' ').slice(0,40) : '空白便签';
-      return `<div class="file-item note" data-id="${n.id}" data-type="note">
-        <div class="item-icon">📝</div>
-        <div class="item-info">
-          <div class="item-name">${escHtml(n.title || '无标题')}</div>
-          <div class="item-meta">${preview} · ${formatDate(n.updated)}</div>
+      const pinnedIcon = n.pinned ? ' 📌' : '';
+      let previewText;
+      if (searchQuery && n.content) {
+        const flat = n.content.replace(/\n/g, ' ');
+        const idx = flat.toLowerCase().indexOf(searchQuery.toLowerCase());
+        if (idx >= 0) {
+          const ctxLen = 30;
+          const start = Math.max(0, idx - ctxLen);
+          const end = Math.min(flat.length, idx + searchQuery.length + ctxLen);
+          previewText = (start > 0 ? '…' : '') + flat.slice(start, end) + (end < flat.length ? '…' : '');
+        } else {
+          previewText = flat.slice(0, 40);
+        }
+      } else {
+        previewText = n.content ? n.content.replace(/\n/g, ' ').slice(0, 40) : '空白便签';
+      }
+      const nameHtml = (searchQuery ? highlightText(n.title || '无标题', searchQuery) : escHtml(n.title || '无标题')) + pinnedIcon;
+      const previewHtml = searchQuery ? highlightText(previewText, searchQuery) : escHtml(previewText);
+      const pinClass = n.pinned ? ' pinned' : '';
+      const nKey = 'note:' + n.id;
+      const nChecked = selectedItems[nKey] ? ' checked' : '';
+      html += `<div class="file-item-wrap" data-id="${n.id}" data-type="note" data-key="${nKey}">
+        <div class="swipe-actions">
+          <div class="swipe-act swipe-pin" data-pin="${n.id}"><span class="swipe-act-icon">${n.pinned ? '📌' : '📍'}</span>${n.pinned ? '取消' : '置顶'}</div>
+          <div class="swipe-act swipe-move" data-move="${n.id}"><span class="swipe-act-icon">📁</span>移动</div>
+          <div class="swipe-act swipe-share" data-share="${n.id}"><span class="swipe-act-icon">↗</span>分享</div>
+          <div class="swipe-act swipe-delete" data-del="${n.id}"><span class="swipe-act-icon">🗑</span>删除</div>
         </div>
-        <span class="item-actions" data-ctx="${n.id}" data-ctx-type="note">⋯</span>
+        <div class="file-item-inner">
+          <span class="select-checkbox${nChecked}" data-key="${nKey}">✓</span>
+          <div class="file-item note${pinClass}" data-id="${n.id}" data-type="note">
+            <div class="item-icon">📝</div>
+            <div class="item-info">
+              <div class="item-name">${nameHtml}</div>
+              <div class="item-meta">${previewHtml} · ${formatDate(n.updated)}</div>
+            </div>
+            <span class="item-actions" data-ctx="${n.id}" data-ctx-type="note">⋯</span>
+          </div>
+        </div>
       </div>`;
     }
-  }).join('');
+  });
+  list.innerHTML = html;
 
+  // Bind click on file items (inner)
   list.querySelectorAll('.file-item').forEach(el => {
     el.addEventListener('click', function(e) {
       if (e.target.classList.contains('item-actions')) return;
+      if (e.target.closest('.swipe-act')) return;
       if (this.dataset.type === 'folder') openFolder(this.dataset.id);
       else openNote(this.dataset.id);
     });
   });
+  // Bind context menu
   list.querySelectorAll('.item-actions').forEach(el => {
     el.addEventListener('click', function(e) {
       e.stopPropagation();
       showCtxMenu(e, this.dataset.ctx, this.dataset.ctxType);
     });
   });
+  // Bind swipe actions
+  list.querySelectorAll('.swipe-pin').forEach(btn => {
+    btn.addEventListener('click', function(e) { e.stopPropagation(); togglePin(this.dataset.pin); });
+  });
+  list.querySelectorAll('.swipe-move').forEach(btn => {
+    btn.addEventListener('click', function(e) { e.stopPropagation(); showMoveModal(this.dataset.move); });
+  });
+  list.querySelectorAll('.swipe-share').forEach(btn => {
+    btn.addEventListener('click', function(e) { e.stopPropagation(); showShareModal(this.dataset.share); });
+  });
+  list.querySelectorAll('.swipe-delete').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const id = this.dataset.del;
+      if (store.notes[id]) { delete store.notes[id]; saveStore(); renderFileList(searchQuery); showToast('已删除'); }
+      else if (store.folders[id]) { deleteFolder(id); renderFileList(searchQuery); }
+    });
+  });
+  // Bind swipe for touch devices
+  list.querySelectorAll('.file-item-wrap').forEach(wrap => setupSwipe(wrap));
+  // Bind selection mode click
+  list.querySelectorAll('.file-item-wrap').forEach(wrap => {
+    wrap.addEventListener('click', function(e) {
+      if (!selectMode) return;
+      if (e.target.closest('.swipe-act')) return;
+      const key = this.dataset.key;
+      if (!key) return;
+      const [type, id] = key.split(':');
+      toggleSelectItem(type, id);
+    });
+  });
+
+  // Auto-scroll to first match
+  if (searchQuery) {
+    const firstMark = list.querySelector('mark');
+    if (firstMark) {
+      setTimeout(() => firstMark.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+    }
+  }
+
 }
 
 function escHtml(s) {
@@ -894,13 +1449,14 @@ function escHtml(s) {
 function openFolder(id) {
   currentFolderId = id;
   updateHeader();
+  updateQuickBack();
   renderFileList();
   closeFab();
 }
 
 function updateHeader() {
   const folder = store.folders[currentFolderId];
-  const title = currentFolderId === 'root' ? '手机分层便签' : folder.name;
+  const title = currentFolderId === 'root' ? '成书笔记' : folder.name;
   document.getElementById('header-title').textContent = title;
   document.getElementById('btn-back').style.visibility = currentFolderId === 'root' ? 'hidden' : 'visible';
   renderBreadcrumb();
@@ -933,6 +1489,260 @@ function getPath(id) {
 document.getElementById('btn-back').addEventListener('click', () => {
   const folder = store.folders[currentFolderId];
   if (folder && folder.parent !== null) openFolder(folder.parent);
+});
+
+// Quick back button (bottom-right, right-thumb friendly)
+const quickBack = document.getElementById('quick-back');
+function updateQuickBack() {
+  if (currentFolderId !== 'root') {
+    quickBack.classList.add('show');
+  } else {
+    quickBack.classList.remove('show');
+  }
+}
+quickBack.addEventListener('click', () => {
+  const folder = store.folders[currentFolderId];
+  if (folder && folder.parent !== null) openFolder(folder.parent);
+});
+
+// ===================== RECENT NOTES =====================
+function getRecentNotes() {
+  let recent = [];
+  try { recent = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]'); } catch(e) {}
+  return recent.filter(id => store.notes[id]).slice(0, 5);
+}
+function renderRecent() {
+  const section = document.getElementById('recent-section');
+  const scroll = document.getElementById('recent-scroll');
+  const recent = getRecentNotes().filter(id => id !== currentNoteId);
+  if (recent.length === 0) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+  scroll.innerHTML = recent.map(id => {
+    const n = store.notes[id];
+    return `<div class="recent-chip" data-id="${id}" onclick="event.stopPropagation();openNote('${id}')">
+      <span>📝</span><span>${escHtml(n.title || '无标题')}</span>
+    </div>`;
+  }).join('');
+}
+
+// ===================== PIN / UNPIN =====================
+function togglePin(id) {
+  const note = store.notes[id];
+  const folder = store.folders[id];
+  if (note) {
+    note.pinned = !note.pinned;
+  } else if (folder) {
+    folder.pinned = !folder.pinned;
+  } else return;
+  saveStore();
+  renderFileList(document.getElementById('search-input').value.trim());
+}
+function isPinned(id) {
+  return !!(store.notes[id] && store.notes[id].pinned) || !!(store.folders[id] && store.folders[id].pinned);
+}
+
+// ===================== WRITING GOAL =====================
+function updateGoalBar() {
+  if (dailyGoal <= 0) {
+    document.getElementById('goal-bar').style.display = 'none';
+    return;
+  }
+  document.getElementById('goal-bar').style.display = 'flex';
+  const today = new Date().toISOString().slice(0, 10);
+  let data = {};
+  try { data = JSON.parse(localStorage.getItem('chengshu_goal_data') || '{}'); } catch(e) {}
+  const todayWords = data[today] || 0;
+  const pct = Math.min(100, Math.round(todayWords / dailyGoal * 100));
+  document.getElementById('goal-text').textContent = todayWords + ' / ' + dailyGoal + ' 字';
+  document.getElementById('goal-fill').style.width = pct + '%';
+}
+
+document.getElementById('goal-set-btn').addEventListener('click', () => {
+  document.getElementById('goal-input').value = dailyGoal || 500;
+  document.getElementById('goal-modal').classList.add('show');
+  setTimeout(() => document.getElementById('goal-input').focus(), 300);
+});
+document.getElementById('goal-cancel').addEventListener('click', () => document.getElementById('goal-modal').classList.remove('show'));
+document.getElementById('goal-confirm').addEventListener('click', () => {
+  const v = parseInt(document.getElementById('goal-input').value) || 0;
+  dailyGoal = v;
+  localStorage.setItem(GOAL_KEY, v);
+  document.getElementById('goal-modal').classList.remove('show');
+  updateGoalBar();
+});
+document.getElementById('goal-input').addEventListener('keydown', e => { if (e.key==='Enter') document.getElementById('goal-confirm').click(); });
+document.getElementById('goal-modal').addEventListener('click', function(e) { if(e.target===this) this.classList.remove('show'); });
+
+function trackGoalWords(count) {
+  if (dailyGoal <= 0) return;
+  const today = new Date().toISOString().slice(0, 10);
+  let data = {};
+  try { data = JSON.parse(localStorage.getItem('chengshu_goal_data') || '{}'); } catch(e) {}
+  data[today] = Math.max(data[today] || 0, count);
+  localStorage.setItem('chengshu_goal_data', JSON.stringify(data));
+  updateGoalBar();
+}
+
+// ===================== MOVE TO FOLDER =====================
+function showMoveModal(id) {
+  moveTargetId = id;
+  document.getElementById('move-modal').classList.add('show');
+  renderFolderPickList();
+}
+function renderFolderPickList() {
+  const list = document.getElementById('folder-pick-list');
+  const all = flattenFolders();
+  list.innerHTML = all.map(f => {
+    const depth = f.path.length - 1;
+    const indent = ' '.repeat(depth);
+    const isCurrent = store.notes[moveTargetId] && store.notes[moveTargetId].parent === f.id;
+    return `<div class="folder-pick-item" data-id="${f.id}" style="${isCurrent?'opacity:0.4':''}">
+      <span class="fp-icon">${f.id==='root'?'🏠':'📁'}</span>
+      <span class="fp-name">${indent}${escHtml(f.name)}</span>
+      ${isCurrent?'<span style="font-size:11px;color:var(--text-muted)">当前</span>':''}
+    </div>`;
+  }).join('');
+  list.querySelectorAll('.folder-pick-item').forEach(el => {
+    if (store.notes[moveTargetId] && store.notes[moveTargetId].parent === el.dataset.id) return;
+    el.addEventListener('click', () => doMoveNote(el.dataset.id));
+  });
+}
+function doMoveNote(folderId) {
+  if (!moveTargetId || !store.notes[moveTargetId]) return;
+  store.notes[moveTargetId].parent = folderId;
+  store.notes[moveTargetId].updated = Date.now();
+  saveStore();
+  document.getElementById('move-modal').classList.remove('show');
+  renderFileList(document.getElementById('search-input').value.trim());
+  showToast('已移动到 ' + (store.folders[folderId] ? store.folders[folderId].name : '根目录'));
+  moveTargetId = null;
+}
+function flattenFolders(parentId, path) {
+  parentId = parentId || 'root';
+  path = path || [];
+  const results = [];
+  const folder = store.folders[parentId];
+  if (!folder) return results;
+  const entryPath = parentId === 'root' ? [{ id: 'root', name: '根目录' }] : [...path, { id: folder.id, name: folder.name }];
+  results.push({ id: parentId, name: parentId === 'root' ? '根目录' : folder.name, path: entryPath });
+  (folder.children || []).forEach(cid => {
+    results.push(...flattenFolders(cid, entryPath));
+  });
+  return results;
+}
+document.getElementById('move-cancel').addEventListener('click', () => document.getElementById('move-modal').classList.remove('show'));
+document.getElementById('move-modal').addEventListener('click', function(e) { if(e.target===this) this.classList.remove('show'); });
+
+// ===================== SWIPE =====================
+let swipeStartX = 0, swipeStartY = 0, swipeTarget = null;
+function setupSwipe(wrap) {
+  const inner = wrap.querySelector('.file-item-inner');
+  let startX = 0, offsetX = 0, open = false;
+
+  function reset() { inner.style.transform = 'translateX(0)'; offsetX = 0; open = false; if (swipeOpen===wrap) swipeOpen=null; }
+  function openSwipe() {
+    const actionsW = wrap.querySelector('.swipe-actions');
+    const w = actionsW ? actionsW.children.length * 56 : 224;
+    inner.style.transform = 'translateX(-' + w + 'px)';
+    offsetX = -w;
+    open = true;
+    if (swipeOpen && swipeOpen !== wrap) { swipeOpen.querySelector('.file-item-inner').style.transform = 'translateX(0)'; }
+    swipeOpen = wrap;
+  }
+
+  inner.addEventListener('touchstart', function(e) {
+    if (e.touches.length !== 1) return;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    inner.style.transition = 'none';
+  }, {passive: true});
+
+  inner.addEventListener('touchmove', function(e) {
+    if (e.touches.length !== 1) return;
+    const dx = e.touches[0].clientX - startX;
+    const dy = e.touches[0].clientY - startY;
+    if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 10) { reset(); return; }
+    if (dx > 10) { reset(); return; }
+    if (dx < 0) {
+      const actionsW = wrap.querySelector('.swipe-actions');
+      const maxSwipe = actionsW ? actionsW.children.length * 56 : 224;
+      offsetX = Math.max(-maxSwipe, dx);
+      inner.style.transform = 'translateX(' + offsetX + 'px)';
+    }
+  }, {passive: false});
+
+  inner.addEventListener('touchend', function() {
+    inner.style.transition = 'transform 0.2s ease';
+    if (offsetX < -40) openSwipe();
+    else reset();
+  });
+}
+
+// Close swipe on outside tap
+document.addEventListener('click', function(e) {
+  if (swipeOpen && !swipeOpen.contains(e.target)) {
+    const inner = swipeOpen.querySelector('.file-item-inner');
+    if (inner) { inner.style.transform = 'translateX(0)'; inner.style.transition = 'transform 0.2s ease'; }
+    swipeOpen = null;
+  }
+});
+
+// ===================== MOVE UP / DOWN =====================
+function moveItem(id, type, direction) {
+  const searchQ = document.getElementById('search-input').value.trim();
+  if (searchQ) { showToast('搜索中不能调整顺序'); return; }
+  // Get current sorted items
+  const items = getSortedItems();
+  const idx = items.findIndex(item => item.data.id === id && item.type === type);
+  if (idx < 0) return;
+  const newIdx = idx + direction;
+  if (newIdx < 0 || newIdx >= items.length) { showToast(direction < 0 ? '已在最顶部' : '已在最底部'); return; }
+  // Swap order values
+  const a = items[idx].data;
+  const b = items[newIdx].data;
+  const aOrder = a.order !== undefined ? a.order : idx;
+  const bOrder = b.order !== undefined ? b.order : newIdx;
+  a.order = bOrder;
+  b.order = aOrder;
+  saveStore();
+  renderFileList();
+}
+
+function getSortedItems() {
+  const { folders, notes } = getChildren(currentFolderId);
+  let items = [];
+  folders.forEach(f => {
+    items.push({ type:'folder', data:f });
+  });
+  notes.forEach(n => {
+    items.push({ type:'note', data:n });
+  });
+  items.sort((a, b) => {
+    const aPinned = a.data.pinned ? 0 : 1;
+    const bPinned = b.data.pinned ? 0 : 1;
+    if (aPinned !== bPinned) return aPinned - bPinned;
+    const aHasOrder = a.data.order != null;
+    const bHasOrder = b.data.order != null;
+    if (aHasOrder && bHasOrder) return a.data.order - b.data.order;
+    if (aHasOrder && !bHasOrder) return -1;
+    if (!aHasOrder && bHasOrder) return 1;
+    if (a.type !== b.type) return a.type === 'folder' ? -1 : 1;
+    if (sortOrder === 'date') {
+      const da = a.data.updated || a.data.created || 0;
+      const db = b.data.updated || b.data.created || 0;
+      if (da !== db) return db - da;
+    }
+    return (a.data.name || a.data.title || '').localeCompare(b.data.name || b.data.title || '', 'zh-CN', { numeric: true });
+  });
+  return items;
+}
+
+// ===================== GRID TOGGLE =====================
+const btnGridToggle = document.getElementById('btn-grid-toggle');
+btnGridToggle.addEventListener('click', () => {
+  gridMode = !gridMode;
+  btnGridToggle.classList.toggle('active-view', gridMode);
+  renderFileList();
 });
 
 // ===================== FAB =====================
@@ -1005,11 +1815,30 @@ function showCtxMenu(e, id, type) {
   const rect = e.target.getBoundingClientRect();
   const appRect = document.getElementById('app').getBoundingClientRect();
   menu.style.right = (appRect.right - rect.right + 10) + 'px';
-  menu.style.top = (rect.bottom - appRect.top + 4) + 'px';
   menu.style.left = 'auto';
-  // show/hide export & share based on type
-  document.getElementById('ctx-export').style.display = type === 'note' ? 'flex' : 'none';
-  document.getElementById('ctx-share').style.display = type === 'note' ? 'flex' : 'none';
+  menu.style.bottom = 'auto';
+  // If near bottom of app, open upward
+  const spaceBelow = appRect.bottom - rect.bottom;
+  if (spaceBelow < 280) {
+    menu.style.bottom = (appRect.bottom - rect.top + 4) + 'px';
+    menu.style.top = 'auto';
+  } else {
+    menu.style.top = (rect.bottom - appRect.top + 4) + 'px';
+    menu.style.bottom = 'auto';
+  }
+  const isNote = type === 'note';
+  const isFolder = type === 'folder';
+  document.getElementById('ctx-pin').style.display = 'flex';
+  if (isNote && store.notes[id]) {
+    document.getElementById('ctx-pin').textContent = store.notes[id].pinned ? '📍 取消置顶' : '📌 置顶';
+  } else if (isFolder && store.folders[id]) {
+    document.getElementById('ctx-pin').textContent = store.folders[id].pinned ? '📍 取消置顶' : '📌 置顶';
+  }
+  document.getElementById('ctx-move').style.display = isNote ? 'flex' : 'none';
+  document.getElementById('ctx-moveup').style.display = 'flex';
+  document.getElementById('ctx-movedown').style.display = 'flex';
+  document.getElementById('ctx-export').style.display = isNote ? 'flex' : 'none';
+  document.getElementById('ctx-share').style.display = isNote ? 'flex' : 'none';
   menu.classList.add('show');
 }
 
@@ -1039,10 +1868,30 @@ document.getElementById('ctx-share').addEventListener('click', () => {
   if (contextTarget && contextTarget.type === 'note') showShareModal(contextTarget.id);
 });
 
+document.getElementById('ctx-pin').addEventListener('click', () => {
+  document.getElementById('ctx-menu').classList.remove('show');
+  if (!contextTarget) return;
+  togglePin(contextTarget.id);
+});
+document.getElementById('ctx-move').addEventListener('click', () => {
+  document.getElementById('ctx-menu').classList.remove('show');
+  if (!contextTarget || contextTarget.type !== 'note') return;
+  showMoveModal(contextTarget.id);
+});
+document.getElementById('ctx-moveup').addEventListener('click', () => {
+  document.getElementById('ctx-menu').classList.remove('show');
+  if (!contextTarget) return;
+  moveItem(contextTarget.id, contextTarget.type, -1);
+});
+document.getElementById('ctx-movedown').addEventListener('click', () => {
+  document.getElementById('ctx-menu').classList.remove('show');
+  if (!contextTarget) return;
+  moveItem(contextTarget.id, contextTarget.type, 1);
+});
 document.getElementById('ctx-delete').addEventListener('click', () => {
   document.getElementById('ctx-menu').classList.remove('show');
   if (!contextTarget) return;
-  if (contextTarget.type === 'folder') deleteFolder(contextTarget.id);
+  if (contextTarget.type === 'folder') { deleteFolder(contextTarget.id); renderFileList(); }
   else { delete store.notes[contextTarget.id]; saveStore(); renderFileList(); }
 });
 
@@ -1077,12 +1926,23 @@ let autoSaveTimer = null;
 function openNote(id) {
   currentNoteId = id;
   const note = store.notes[id];
+  if (!note) return;
+  // Track recent
+  let recent = [];
+  try { recent = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]'); } catch(e) {}
+  recent = recent.filter(rid => rid !== id && store.notes[rid]);
+  recent.unshift(id);
+  if (recent.length > 10) recent = recent.slice(0, 10);
+  localStorage.setItem(RECENT_KEY, JSON.stringify(recent));
   document.getElementById('note-title').value = note.title || '';
-  document.getElementById('note-content').value = note.content || '';
+  const content = document.getElementById('note-content');
+  content.innerText = note.content || '';
   currentFontSize = note.fontSize || 15;
   document.getElementById('font-size-val').textContent = currentFontSize;
-  const content = document.getElementById('note-content');
   content.style.fontSize = currentFontSize + 'px';
+  currentLineHeight = note.lineHeight || 1.7;
+  document.getElementById('line-height-val').textContent = currentLineHeight.toFixed(1);
+  content.style.lineHeight = currentLineHeight;
   content.style.fontFamily = note.fontFamily || "system-ui,-apple-system,'PingFang SC','Microsoft YaHei',sans-serif";
   document.getElementById('font-select').value = note.fontFamily || "system-ui,-apple-system,'PingFang SC','Microsoft YaHei',sans-serif";
   editorBg = note.bg || '#FFFFFF';
@@ -1092,16 +1952,30 @@ function openNote(id) {
   const ev = document.getElementById('editor-view');
   ev.classList.add('active');
   ev.style.display = 'flex';
-  setTimeout(() => content.focus(), 200);
+  closeFindReplace();
+  // If coming from main search, auto-highlight & scroll to first match
+  const searchQ = document.getElementById('search-input').value.trim();
+  if (searchQ) {
+    setTimeout(() => {
+      document.getElementById('fr-find').value = searchQ;
+      document.getElementById('find-replace-bar').classList.add('show');
+      applyFindHighlights();
+      if (findMarks.length > 0) navigateToMark(0);
+    }, 300);
+  } else {
+    setTimeout(() => content.focus(), 200);
+  }
 }
 
 function applyEditorBg(color) {
   const area = document.getElementById('editor-bg-area');
   const header = document.querySelector('#editor-view .editor-header');
   const toolbar = document.getElementById('editor-toolbar');
+  const findBar = document.getElementById('find-replace-bar');
   area.style.background = color;
   header.style.background = color;
   toolbar.style.background = color;
+  findBar.style.background = color;
   document.getElementById('editor-view').style.background = color;
 }
 
@@ -1109,6 +1983,7 @@ function closeEditor() {
   saveCurrentNote();
   document.getElementById('editor-view').classList.remove('active');
   setTimeout(() => { document.getElementById('editor-view').style.display = 'none'; }, 300);
+  closeFindReplace();
   renderFileList();
 }
 
@@ -1117,16 +1992,21 @@ function saveCurrentNote() {
   const note = store.notes[currentNoteId];
   if (!note) return;
   note.title = document.getElementById('note-title').value;
-  note.content = document.getElementById('note-content').value;
+  note.content = document.getElementById('note-content').innerText;
   note.updated = Date.now();
   note.bg = editorBg;
   note.fontSize = currentFontSize;
+  note.lineHeight = currentLineHeight;
   note.fontFamily = document.getElementById('font-select').value;
   saveStore();
+  updateWordCount();
+  const count = document.getElementById('note-content').innerText.replace(/\s/g,'').length;
+  trackGoalWords(count);
   document.getElementById('save-status').textContent = '已保存 ✓';
 }
 
 document.getElementById('editor-back').addEventListener('click', closeEditor);
+document.getElementById('editor-quick-back').addEventListener('click', closeEditor);
 document.getElementById('note-content').addEventListener('input', () => {
   updateWordCount();
   document.getElementById('save-status').textContent = '编辑中…';
@@ -1144,9 +2024,178 @@ document.getElementById('btn-save').addEventListener('click', () => {
 });
 
 function updateWordCount() {
-  const text = document.getElementById('note-content').value;
-  document.getElementById('word-count').textContent = text.replace(/\s/g,'').length + ' 字';
+  const text = document.getElementById('note-content').innerText;
+  const count = text.replace(/\s/g,'').length;
+  // Build folder path
+  let folderPath = '';
+  if (currentNoteId && store.notes[currentNoteId]) {
+    const parentId = store.notes[currentNoteId].parent;
+    if (parentId && parentId !== 'root') {
+      const path = getPath(parentId);
+      folderPath = ' · 📁' + path.map(p => p.name).join('/');
+    }
+  }
+  const now = new Date();
+  const timeStr = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  document.getElementById('editor-info').textContent = count + ' 字 · 编辑于 ' + formatDate(Date.now()) + folderPath;
 }
+
+// ===================== FIND & REPLACE (WPS-style with color highlights) =====================
+let findIdx = -1;
+let findMarks = [];
+let findQuery = '';
+let findApplied = false;
+
+function closeFindReplace() {
+  document.getElementById('find-replace-bar').classList.remove('show');
+  document.getElementById('fr-find').value = '';
+  document.getElementById('fr-replace').value = '';
+  document.getElementById('fr-count').textContent = '';
+  findIdx = -1; findMarks = []; findQuery = '';
+  clearFindHighlights();
+  findApplied = false;
+}
+
+// Remove all <mark> highlights, restore plain text
+function clearFindHighlights() {
+  const content = document.getElementById('note-content');
+  if (!findApplied) return;
+  content.innerHTML = content.innerText;
+  findApplied = false;
+  findMarks = [];
+  findIdx = -1;
+}
+
+// Build highlighted innerHTML with <mark> tags around all matches
+function applyFindHighlights() {
+  const query = document.getElementById('fr-find').value;
+  if (!query) { clearFindHighlights(); findMarks = []; findIdx = -1; findQuery = ''; return; }
+
+  const content = document.getElementById('note-content');
+  // If user edited, re-read plain text
+  const plainText = findApplied ? content.innerText : content.innerText;
+  findQuery = query;
+
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = new RegExp('(' + escaped + ')', 'gi');
+  const html = escHtml(plainText).replace(re, '<mark>$1</mark>');
+
+  // Save cursor position
+  const sel = window.getSelection();
+  // Rebuild with highlights
+  content.innerHTML = html;
+  findApplied = true;
+
+  // Re-query all mark elements
+  findMarks = Array.from(content.querySelectorAll('mark'));
+  if (findMarks.length === 0) {
+    document.getElementById('fr-count').textContent = '0个';
+    findIdx = -1;
+    return;
+  }
+  document.getElementById('fr-count').textContent = findMarks.length + '个';
+  findIdx = -1; // reset to before first match
+}
+
+function navigateToMark(idx) {
+  if (findMarks.length === 0) return;
+  // Remove current class from all marks
+  findMarks.forEach(m => m.classList.remove('current'));
+  findIdx = ((idx % findMarks.length) + findMarks.length) % findMarks.length;
+  const mark = findMarks[findIdx];
+  mark.classList.add('current');
+  mark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  document.getElementById('fr-count').textContent = (findIdx + 1) + '/' + findMarks.length;
+}
+
+document.getElementById('btn-find-replace').addEventListener('click', () => {
+  const bar = document.getElementById('find-replace-bar');
+  bar.classList.toggle('show');
+  if (bar.classList.contains('show')) {
+    document.getElementById('fr-find').focus();
+  } else {
+    closeFindReplace();
+  }
+});
+
+// Auto-search as user types in find input
+document.getElementById('fr-find').addEventListener('input', () => {
+  const q = document.getElementById('fr-find').value;
+  if (!q) {
+    clearFindHighlights();
+    document.getElementById('fr-count').textContent = '';
+    findMarks = [];
+    findIdx = -1;
+    findQuery = '';
+    return;
+  }
+  if (q !== findQuery) {
+    applyFindHighlights();
+  }
+  if (findMarks.length > 0) navigateToMark(0);
+});
+
+document.getElementById('fr-next').addEventListener('click', () => {
+  if (findMarks.length === 0) { applyFindHighlights(); }
+  if (findMarks.length > 0) navigateToMark(findIdx + 1);
+});
+document.getElementById('fr-prev').addEventListener('click', () => {
+  if (findMarks.length === 0) { applyFindHighlights(); }
+  if (findMarks.length > 0) navigateToMark(findIdx - 1);
+});
+
+// Replace single match
+document.getElementById('fr-replace-one').addEventListener('click', () => {
+  const find = document.getElementById('fr-find').value;
+  const replace = document.getElementById('fr-replace').value;
+  if (!find || findMarks.length === 0) return;
+
+  const content = document.getElementById('note-content');
+  const marks = content.querySelectorAll('mark');
+  if (findIdx < 0 || findIdx >= marks.length) return;
+  const currentMark = marks[findIdx];
+  currentMark.replaceWith(document.createTextNode(replace));
+  findApplied = true;
+
+  saveCurrentNote();
+  updateWordCount();
+  applyFindHighlights();
+  // Navigate to next
+  if (findMarks.length > 0) {
+    const nextIdx = Math.min(findIdx, findMarks.length - 1);
+    navigateToMark(nextIdx);
+  }
+});
+
+// Replace all
+document.getElementById('fr-replace-all').addEventListener('click', () => {
+  const find = document.getElementById('fr-find').value;
+  const replace = document.getElementById('fr-replace').value;
+  if (!find) return;
+  const content = document.getElementById('note-content');
+  const marks = content.querySelectorAll('mark');
+  const count = marks.length;
+  marks.forEach(m => m.replaceWith(document.createTextNode(replace)));
+  document.getElementById('fr-count').textContent = '已替换' + count + '处';
+  saveCurrentNote();
+  updateWordCount();
+  findMarks = [];
+  findIdx = -1;
+  findQuery = '';
+  findApplied = false;
+});
+
+// When user types, just mark highlights as stale (don't modify DOM)
+document.getElementById('note-content').addEventListener('input', () => {
+  if (findApplied) {
+    findApplied = false;
+    findMarks = [];
+    findIdx = -1;
+  }
+});
+
+document.getElementById('fr-close').addEventListener('click', closeFindReplace);
+document.getElementById('fr-find').addEventListener('keydown', e => { if (e.key==='Enter') { if (findMarks.length === 0) applyFindHighlights(); if (findMarks.length > 0) navigateToMark(findIdx + 1); } });
 
 // ===================== TOOLBAR =====================
 document.getElementById('font-select').addEventListener('change', function() {
@@ -1166,6 +2215,24 @@ document.getElementById('font-dec').addEventListener('click', () => {
     currentFontSize--;
     document.getElementById('font-size-val').textContent = currentFontSize;
     document.getElementById('note-content').style.fontSize = currentFontSize + 'px';
+    saveCurrentNote();
+  }
+});
+
+// Line-height controls
+document.getElementById('line-h-inc').addEventListener('click', () => {
+  if (currentLineHeight < 2.5) {
+    currentLineHeight = Math.round((currentLineHeight + 0.1) * 10) / 10;
+    document.getElementById('line-height-val').textContent = currentLineHeight.toFixed(1);
+    document.getElementById('note-content').style.lineHeight = currentLineHeight;
+    saveCurrentNote();
+  }
+});
+document.getElementById('line-h-dec').addEventListener('click', () => {
+  if (currentLineHeight > 1.2) {
+    currentLineHeight = Math.round((currentLineHeight - 0.1) * 10) / 10;
+    document.getElementById('line-height-val').textContent = currentLineHeight.toFixed(1);
+    document.getElementById('note-content').style.lineHeight = currentLineHeight;
     saveCurrentNote();
   }
 });
@@ -1196,7 +2263,7 @@ function setAlign(btn) {
 }
 
 // ===================== THEME =====================
-function showThemeModal(forEditor=false) {
+function showThemeModal(forEditor) {
   const modal = document.getElementById('theme-modal');
   modal.dataset.forEditor = forEditor ? '1' : '0';
   const val = forEditor ? editorBg : currentBg;
@@ -1211,12 +2278,80 @@ document.querySelectorAll('.theme-item').forEach(el => {
     this.classList.add('active');
     const bg = this.dataset.bg;
     const forEditor = document.getElementById('theme-modal').dataset.forEditor === '1';
-    if (forEditor) { editorBg=bg; applyEditorBg(bg); saveCurrentNote(); }
-    else { currentBg=bg; document.getElementById('app').style.background=bg; document.getElementById('main-view').style.background=bg; }
+    if (forEditor) {
+      editorBg = bg;
+      applyEditorBg(bg);
+      saveCurrentNote();
+    } else {
+      currentBg = bg;
+      document.getElementById('app').style.background = bg;
+      document.getElementById('main-view').style.background = bg;
+    }
   });
 });
 document.getElementById('theme-close').addEventListener('click', () => document.getElementById('theme-modal').classList.remove('show'));
 document.getElementById('theme-modal').addEventListener('click', function(e) { if(e.target===this) this.classList.remove('show'); });
+
+// ===================== SELECTION MODE =====================
+function enterSelectMode() {
+  selectMode = true;
+  selectedItems = {};
+  document.body.classList.add('select-mode');
+  updateSelectUI();
+  renderFileList(document.getElementById('search-input').value.trim());
+}
+
+function exitSelectMode() {
+  selectMode = false;
+  selectedItems = {};
+  document.body.classList.remove('select-mode');
+  updateSelectUI();
+  renderFileList(document.getElementById('search-input').value.trim());
+}
+
+function toggleSelectItem(type, id) {
+  const key = type + ':' + id;
+  if (selectedItems[key]) {
+    delete selectedItems[key];
+  } else {
+    selectedItems[key] = true;
+  }
+  updateSelectUI();
+  // Update checkbox visual
+  const cb = document.querySelector('.select-checkbox[data-key="' + key + '"]');
+  if (cb) cb.classList.toggle('checked', !!selectedItems[key]);
+}
+
+function updateSelectUI() {
+  const count = Object.keys(selectedItems).length;
+  document.getElementById('sel-count').textContent = '已选 ' + count + ' 项';
+  document.getElementById('sel-export').disabled = count === 0;
+}
+
+function getSelectedNotes() {
+  let notes = [];
+  Object.keys(selectedItems).forEach(key => {
+    const [type, id] = key.split(':');
+    if (type === 'note' && store.notes[id]) {
+      notes.push(store.notes[id]);
+    } else if (type === 'folder') {
+      notes = notes.concat(collectFolderNotes(id));
+    }
+  });
+  // Deduplicate
+  const seen = new Set();
+  return notes.filter(n => { if (seen.has(n.id)) return false; seen.add(n.id); return true; });
+}
+
+// Selection bar buttons
+document.getElementById('sel-cancel').addEventListener('click', exitSelectMode);
+document.getElementById('sel-export').addEventListener('click', () => {
+  const notes = getSelectedNotes();
+  if (notes.length === 0) { showToast('请至少选择一项'); return; }
+  exportTarget = { type: 'selected', notes: notes };
+  document.getElementById('export-modal-title').textContent = '导出选中的 ' + notes.length + ' 篇便签';
+  document.getElementById('export-modal').classList.add('show');
+});
 
 // ===================== EXPORT =====================
 function showExportModal(target) {
@@ -1231,17 +2366,18 @@ function showExportModal(target) {
     titleStr = '导出全部便签';
   }
   document.getElementById('export-modal-title').textContent = titleStr;
+  // Show select option only for "all" exports
+  const selRow = document.getElementById('export-select-row');
+  if (selRow) selRow.style.display = (target.type === 'all') ? 'flex' : 'none';
   document.getElementById('export-modal').classList.add('show');
 }
 
-// Collect notes for export target
 function collectNotesForExport() {
   if (!exportTarget) return [];
+  if (exportTarget.type === 'selected') return exportTarget.notes || [];
   if (exportTarget.type === 'note') return [store.notes[exportTarget.id]].filter(Boolean);
   if (exportTarget.type === 'folder') return collectFolderNotes(exportTarget.id);
-  if (exportTarget.type === 'all') {
-    return collectFolderNotes('root');
-  }
+  if (exportTarget.type === 'all') return collectFolderNotes('root');
   return [];
 }
 
@@ -1263,6 +2399,10 @@ function downloadFile(filename, content, mimeType) {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+  // Show the file path info
+  setTimeout(() => {
+    showToast('已保存到：手机/Download/' + filename + ' 可在文件管理器查看');
+  }, 300);
 }
 
 function exportAsTxt(notes) {
@@ -1273,22 +2413,20 @@ function exportAsTxt(notes) {
     content += '时间：' + new Date(n.updated||n.created).toLocaleString('zh-CN') + '\n\n';
     content += (n.content || '');
   });
-  const name = notes.length === 1 ? (notes[0].title || '便签') : '手机分层便签导出';
+  const name = notes.length === 1 ? (notes[0].title || '便签') : '成书笔记导出';
   downloadFile(name + '.txt', content, 'text/plain;charset=utf-8');
-  showToast('已导出 TXT 文件');
 }
 
 function exportAsMarkdown(notes) {
-  let content = '# 手机分层便签\n\n';
+  let content = '# 成书笔记\n\n';
   notes.forEach((n, i) => {
     content += `## ${n.title || '无标题'}\n\n`;
     content += `> 更新时间：${new Date(n.updated||n.created).toLocaleString('zh-CN')}\n\n`;
     content += (n.content || '') + '\n\n';
     if (i < notes.length - 1) content += '---\n\n';
   });
-  const name = notes.length === 1 ? (notes[0].title || '便签') : '手机分层便签导出';
+  const name = notes.length === 1 ? (notes[0].title || '便签') : '成书笔记导出';
   downloadFile(name + '.md', content, 'text/markdown;charset=utf-8');
-  showToast('已导出 Markdown 文件');
 }
 
 function exportAsHtml(notes) {
@@ -1305,21 +2443,19 @@ function exportAsHtml(notes) {
   });
   const html = `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>手机分层便签导出</title>
+<title>成书笔记导出</title>
 <style>body{font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;max-width:800px;margin:40px auto;padding:20px;color:#1A1A2E;}h1{font-size:28px;font-weight:700;margin-bottom:8px;}
 @media print{article{page-break-after:always;}}</style>
 </head><body>
-<h1>手机分层便签</h1>
+<h1>成书笔记</h1>
 <p style="color:#888;margin-bottom:32px">导出时间：${new Date().toLocaleString('zh-CN')}　共 ${notes.length} 篇</p>
 ${body}
 </body></html>`;
-  const name = notes.length === 1 ? (notes[0].title || '便签') : '手机分层便签导出';
+  const name = notes.length === 1 ? (notes[0].title || '便签') : '成书笔记导出';
   downloadFile(name + '.html', html, 'text/html;charset=utf-8');
-  showToast('已导出 HTML 文件');
 }
 
 function exportAsWord(notes) {
-  // Word-compatible HTML (application/msword)
   let body = '';
   notes.forEach((n, i) => {
     const lines = (n.content || '').split('\n').map(l => `<p>${escHtml(l)||'&nbsp;'}</p>`).join('');
@@ -1332,22 +2468,20 @@ ${lines}`;
 xmlns:w="urn:schemas-microsoft-com:office:word"
 xmlns="http://www.w3.org/TR/REC-html40">
 <head><meta charset="UTF-8">
-<title>手机分层便签</title>
+<title>成书笔记</title>
 <!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View></w:WordDocument></xml><![endif]-->
 <style>body{font-family:'微软雅黑','PingFang SC',sans-serif;font-size:12pt;line-height:1.8;}
 h1{font-size:18pt;}h2{font-size:14pt;}p{margin:0 0 6pt;}</style>
 </head><body>
-<h1>手机分层便签</h1>
+<h1>成书笔记</h1>
 <p style="color:gray">导出时间：${new Date().toLocaleString('zh-CN')}　共 ${notes.length} 篇</p><br>
 ${body}
 </body></html>`;
-  const name = notes.length === 1 ? (notes[0].title || '便签') : '手机分层便签导出';
+  const name = notes.length === 1 ? (notes[0].title || '便签') : '成书笔记导出';
   downloadFile(name + '.doc', content, 'application/msword;charset=utf-8');
-  showToast('已导出 Word 文档（.doc）');
 }
 
 function exportAsBook(notes) {
-  // Same as HTML but styled like a book
   let toc = '<nav><h2 style="margin-bottom:8px">目录</h2><ol>';
   let body = '';
   notes.forEach((n, i) => {
@@ -1370,7 +2504,7 @@ a{text-decoration:none}a:hover{text-decoration:underline}
 @media print{article{page-break-before:always}}
 </style></head><body>
 <div class="cover">
-  <h1>手机分层便签</h1>
+  <h1>成书笔记</h1>
   <p style="color:#888;margin-top:12px">共收录 ${notes.length} 篇笔记</p>
   <p style="color:#aaa;font-size:13px;margin-top:8px">导出于 ${new Date().toLocaleDateString('zh-CN')}</p>
 </div>
@@ -1378,11 +2512,9 @@ ${toc}
 ${body}
 </body></html>`;
   downloadFile('我的便签书.html', html, 'text/html;charset=utf-8');
-  showToast('已导出合并成书（HTML）');
 }
 
 function exportAsPdf(notes) {
-  // Open a print-ready page in a new window
   let body = '';
   notes.forEach((n, i) => {
     const lines = (n.content||'').split('\n').map(l=>`<p>${escHtml(l)||'&nbsp;'}</p>`).join('');
@@ -1391,7 +2523,6 @@ function exportAsPdf(notes) {
       <p style="color:#888;font-size:12px;margin-bottom:16px">更新时间：${new Date(n.updated||n.created).toLocaleString('zh-CN')}</p>
       <div style="font-size:14px;line-height:1.8">${lines}</div>
     </div>`;
-    if (i < notes.length - 1) body += '';
   });
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>便签PDF导出</title>
 <style>body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;margin:0;padding:20px;color:#1A1A2E}
@@ -1406,7 +2537,15 @@ ${body}
 }
 
 document.getElementById('btn-export-all').addEventListener('click', () => {
+  if (selectMode) { exitSelectMode(); return; }
+  const allNotes = collectFolderNotes('root');
+  if (allNotes.length === 0) { showToast('没有可导出的内容'); return; }
   showExportModal({ type: 'all' });
+});
+document.getElementById('export-select-btn').addEventListener('click', () => {
+  document.getElementById('export-modal').classList.remove('show');
+  enterSelectMode();
+  showToast('点击文件夹或笔记即可勾选，选好后点击底部"导出选中"');
 });
 document.getElementById('btn-editor-export').addEventListener('click', () => {
   if (currentNoteId) { saveCurrentNote(); showExportModal({ type: 'note', id: currentNoteId }); }
@@ -1450,7 +2589,7 @@ function getNoteShareText(noteId) {
   if (!n) return '';
   let text = '';
   if (n.title) text += n.title + '\n\n';
-  text += (n.content || '') + '\n\n——来自 手机分层便签';
+  text += (n.content || '') + '\n\n——来自 成书笔记';
   return text;
 }
 
@@ -1462,47 +2601,41 @@ document.querySelectorAll('.share-app').forEach(el => {
   el.addEventListener('click', function() {
     const app = this.dataset.app;
     const text = getNoteShareText();
-    const encoded = encodeURIComponent(text);
     const note = store.notes[shareNoteId];
-    const title = note ? (note.title || '手机分层便签') : '手机分层便签';
+    const title = note ? (note.title || '成书笔记') : '成书笔记';
 
-    let url = '';
     if (app === 'wechat' || app === 'wechat-moments') {
-      // On mobile, attempt native share; on PC, copy to clipboard
       if (navigator.share) {
-        navigator.share({ title, text }).then(() => showToast('已调起分享'));
+        navigator.share({ title, text }).then(() => showToast('已分享')).catch(() => showToast('分享取消'));
       } else {
         copyToClipboard(text);
-        showToast('内容已复制，请粘贴到' + (app==='wechat'?'微信':'朋友圈'));
+        showToast('内容已复制到剪贴板，请打开' + (app==='wechat'?'微信':'朋友圈') + '粘贴发送');
       }
     } else if (app === 'qq') {
-      url = 'https://connect.qq.com/widget/shareqq/index.html?title=' + encodeURIComponent(title) + '&summary=' + encoded;
-      tryOpenUrl(url, 'QQ', text);
+      copyToClipboard(text);
+      showToast('内容已复制，请打开QQ粘贴发送');
     } else if (app === 'feishu') {
       copyToClipboard(text);
-      showToast('内容已复制，请粘贴到飞书');
+      showToast('内容已复制，请打开飞书粘贴发送');
     } else if (app === 'dingding') {
-      url = 'dingtalk://dingtalkclient/page/link?url=' + encodeURIComponent('https://open.dingtalk.com/');
       copyToClipboard(text);
-      showToast('内容已复制，请粘贴到钉钉');
+      showToast('内容已复制，请打开钉钉粘贴发送');
     } else if (app === 'weibo') {
-      url = 'https://service.weibo.com/share/share.php?title=' + encoded;
-      window.open(url, '_blank');
+      const url = 'https://service.weibo.com/share/share.php?title=' + encodeURIComponent(text.substring(0, 200));
+      const w = window.open(url, '_blank');
+      if (!w) { copyToClipboard(text); showToast('弹窗被拦截，内容已复制，请打开微博粘贴'); }
     } else if (app === 'email') {
-      url = 'mailto:?subject=' + encodeURIComponent(title) + '&body=' + encoded;
-      window.location.href = url;
+      const mailUrl = 'mailto:?subject=' + encodeURIComponent(title) + '&body=' + encodeURIComponent(text);
+      window.location.href = mailUrl;
+      showToast('已打开邮件客户端');
     } else if (app === 'sms') {
-      url = 'sms:?body=' + encoded;
-      window.location.href = url;
+      const smsUrl = 'sms:?body=' + encodeURIComponent(text);
+      window.location.href = smsUrl;
+      showToast('已打开短信');
     }
     document.getElementById('share-modal').classList.remove('show');
   });
 });
-
-function tryOpenUrl(url, appName, fallbackText) {
-  try { window.open(url, '_blank'); showToast('已打开分享页面'); }
-  catch(e) { copyToClipboard(fallbackText); showToast('内容已复制，请手动分享到' + appName); }
-}
 
 document.getElementById('share-copy-btn').addEventListener('click', () => {
   const text = getNoteShareText();
@@ -1536,15 +2669,17 @@ function showToast(msg) {
   toast.textContent = msg;
   toast.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
 }
 
 // ===================== SEARCH =====================
 document.getElementById('search-input').addEventListener('input', function() { renderFileList(this.value.trim()); });
 
 // ===================== SORT =====================
-document.getElementById('btn-sort').addEventListener('click', () => {
-  sortOrder = sortOrder==='date'?'name':'date';
+document.getElementById('btn-sort').addEventListener('click', function() {
+  sortOrder = sortOrder === 'date' ? 'name' : 'date';
+  localStorage.setItem('chengshu_sort', sortOrder);
+  this.textContent = sortOrder === 'date' ? '按时间' : '按名称';
   renderFileList();
 });
 
@@ -1562,9 +2697,128 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+// ===================== DARK MODE =====================
+const btnDarkMode = document.getElementById('btn-dark-mode');
+if (localStorage.getItem('chengshu_dark') === '1') {
+  darkMode = true;
+  document.body.classList.add('dark');
+  btnDarkMode.textContent = '☀️';
+}
+btnDarkMode.addEventListener('click', () => {
+  darkMode = !darkMode;
+  document.body.classList.toggle('dark', darkMode);
+  localStorage.setItem('chengshu_dark', darkMode ? '1' : '0');
+  btnDarkMode.textContent = darkMode ? '☀️' : '🌙';
+});
+
+// ===================== FOCUS MODE =====================
+document.getElementById('btn-focus-mode').addEventListener('click', () => {
+  document.getElementById('editor-view').classList.add('focus');
+});
+document.getElementById('focus-exit').addEventListener('click', () => {
+  document.getElementById('editor-view').classList.remove('focus');
+});
+
+// ===================== OCR (Tesseract.js local - dynamic load) =====================
+let ocrActive = false;
+let tesseractLoading = false;
+let tesseractReady = false;
+
+function loadTesseract() {
+  return new Promise((resolve, reject) => {
+    if (tesseractReady) { resolve(); return; }
+    if (tesseractLoading) {
+      // Wait for already-in-progress load
+      const check = setInterval(() => { if (tesseractReady) { clearInterval(check); resolve(); } }, 100);
+      setTimeout(() => { clearInterval(check); reject(new Error('加载超时')); }, 30000);
+      return;
+    }
+    tesseractLoading = true;
+    const script = document.createElement('script');
+    script.src = './ocr/tesseract.min.js';
+    script.onload = () => { tesseractReady = true; tesseractLoading = false; resolve(); };
+    script.onerror = () => { tesseractLoading = false; reject(new Error('OCR 引擎加载失败')); };
+    document.head.appendChild(script);
+  });
+}
+
+document.getElementById('btn-ocr').addEventListener('click', async () => {
+  if (!currentNoteId) { showToast('请先打开一篇笔记'); return; }
+  try {
+    await loadTesseract();
+  } catch(e) {
+    showToast(e.message || 'OCR 引擎加载失败');
+    return;
+  }
+  document.getElementById('ocr-file-input').click();
+});
+document.getElementById('ocr-file-input').addEventListener('change', function() {
+  const file = this.files[0];
+  if (!file) return;
+  ocrActive = true;
+  document.getElementById('ocr-progress-overlay').classList.add('show');
+  document.getElementById('ocr-progress-text').textContent = '正在分析图片…';
+  document.getElementById('ocr-progress-bar').style.width = '5%';
+
+  Tesseract.recognize(file, 'chi_sim+eng', {
+    workerPath: '/ocr/worker.min.js',
+    corePath: '/ocr/tesseract-core.wasm.js',
+    langPath: '/tessdata/',
+    logger: m => {
+      const t = document.getElementById('ocr-progress-text');
+      const bar = document.getElementById('ocr-progress-bar');
+      console.log('[OCR]', m.status, typeof m.progress === 'number' ? Math.round(m.progress*100)+'%' : '');
+      if (m.status === 'loading tesseract core') t.textContent = '加载引擎…';
+      else if (m.status === 'initializing api') t.textContent = '初始化…';
+      else if (m.status === 'loading language traineddata') t.textContent = '加载语言包…';
+      else if (m.status === 'initializing tesseract') t.textContent = '启动引擎…';
+      else if (m.status === 'recognizing text') {
+        const pct = Math.round(m.progress * 100);
+        t.textContent = '识别中 ' + pct + '%';
+        bar.style.width = (10 + pct * 0.85) + '%';
+      }
+    }
+  }).then(result => {
+    document.getElementById('ocr-progress-bar').style.width = '100%';
+    document.getElementById('ocr-progress-text').textContent = '识别完成！';
+    setTimeout(() => {
+      document.getElementById('ocr-progress-overlay').classList.remove('show');
+      if (!ocrActive) return;
+      const text = result.data.text.trim();
+      if (!text) { showToast('未识别到文字，请确保图片清晰'); return; }
+      const content = document.getElementById('note-content');
+      content.focus();
+      const sel = window.getSelection();
+      if (sel.rangeCount > 0) {
+        const range = sel.getRangeAt(0);
+        range.deleteContents();
+        range.insertNode(document.createTextNode(text));
+        range.collapse(false);
+      } else {
+        content.innerText += '\n' + text;
+      }
+      saveCurrentNote();
+      updateWordCount();
+      showToast('已识别 ' + text.replace(/\s/g,'').length + ' 字并插入');
+    }, 600);
+  }).catch(err => {
+    document.getElementById('ocr-progress-overlay').classList.remove('show');
+    showToast('识别失败：' + (err.message || '未知错误'));
+  }).finally(() => {
+    ocrActive = false;
+    this.value = '';
+  });
+});
+document.getElementById('ocr-cancel').addEventListener('click', () => {
+  ocrActive = false;
+  document.getElementById('ocr-progress-overlay').classList.remove('show');
+  document.getElementById('ocr-file-input').value = '';
+});
+
 // ===================== INIT =====================
 renderFileList();
 updateHeader();
+updateQuickBack();
 </script>
 </body>
 </html>

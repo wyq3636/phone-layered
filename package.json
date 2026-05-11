@@ -9,8 +9,22 @@
     "cap:copy": "npx cap copy"
   },
   "devDependencies": {
-    "@capacitor/cli": "^6.0.0",
     "@capacitor/android": "^6.0.0",
+    "@capacitor/cli": "^6.0.0",
     "@capacitor/core": "^6.0.0"
-  }
+  },
+  "main": "sw.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wyq3636/phone-layered-notes.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/wyq3636/phone-layered-notes/issues"
+  },
+  "homepage": "https://github.com/wyq3636/phone-layered-notes#readme",
+  "dependencies": {}
 }

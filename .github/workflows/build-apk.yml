@@ -33,6 +33,35 @@ jobs:
     - name: Sync web assets to Android
       run: npx cap sync android
 
+    - name: Generate App Icons
+      run: |
+        sudo apt-get update -qq && sudo apt-get install -y -qq librsvg2-bin
+        # Generate launcher icons from SVG
+        for size in 48 72 96 144 192; do
+          rsvg-convert -w $size -h $size icon.svg -o icon_${size}.png
+        done
+        # Create necessary mipmap directories
+        for dir in mipmap-mdpi mipmap-hdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi; do
+          mkdir -p android/app/src/main/res/$dir
+        done
+        # Copy icons to the right places (ic_launcher + ic_launcher_round + ic_launcher_foreground)
+        cp icon_48.png  android/app/src/main/res/mipmap-mdpi/ic_launcher.png
+        cp icon_48.png  android/app/src/main/res/mipmap-mdpi/ic_launcher_round.png
+        cp icon_48.png  android/app/src/main/res/mipmap-mdpi/ic_launcher_foreground.png
+        cp icon_72.png  android/app/src/main/res/mipmap-hdpi/ic_launcher.png
+        cp icon_72.png  android/app/src/main/res/mipmap-hdpi/ic_launcher_round.png
+        cp icon_72.png  android/app/src/main/res/mipmap-hdpi/ic_launcher_foreground.png
+        cp icon_96.png  android/app/src/main/res/mipmap-xhdpi/ic_launcher.png
+        cp icon_96.png  android/app/src/main/res/mipmap-xhdpi/ic_launcher_round.png
+        cp icon_96.png  android/app/src/main/res/mipmap-xhdpi/ic_launcher_foreground.png
+        cp icon_144.png android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
+        cp icon_144.png android/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png
+        cp icon_144.png android/app/src/main/res/mipmap-xxhdpi/ic_launcher_foreground.png
+        cp icon_192.png android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+        cp icon_192.png android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png
+        cp icon_192.png android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png
+        echo "Icons generated and placed"
+
     - name: Build Debug APK
       working-directory: android
       run: |
@@ -47,14 +76,14 @@ jobs:
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
       with:
-        name: 分层便签-debug
+        name: 成书笔记-debug
         path: android/app/build/outputs/apk/debug/app-debug.apk
         if-no-files-found: warn
 
     - name: Upload Release APK
       uses: actions/upload-artifact@v4
       with:
-        name: 分层便签-release
+        name: 成书笔记-release
         path: android/app/build/outputs/apk/release/app-release-unsigned.apk
         if-no-files-found: warn
       continue-on-error: true
