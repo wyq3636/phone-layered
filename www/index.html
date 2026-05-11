@@ -1180,6 +1180,8 @@
 
 <script>
 // ===================== DATA STORE =====================
+const isCapacitor = typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform();
+
 const STORAGE_KEY = 'phone_notes_v2';
 const RECENT_KEY = 'chengshu_recent';
 const GOAL_KEY = 'chengshu_goal';
@@ -2389,20 +2391,33 @@ function collectFolderNotes(folderId) {
   return notes;
 }
 
-function downloadFile(filename, content, mimeType) {
-  const blob = new Blob([content], { type: mimeType });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  // Show the file path info
-  setTimeout(() => {
-    showToast('已保存到：手机/Download/' + filename + ' 可在文件管理器查看');
-  }, 300);
+async function downloadFile(filename, content, mimeType) {
+  if (isCapacitor) {
+    try {
+      const { Filesystem, Directory } = Capacitor.Plugins;
+      const base64 = btoa(unescape(encodeURIComponent(content)));
+      await Filesystem.writeFile({
+        path: 'Download/' + filename,
+        data: base64,
+        directory: Directory.External,
+        recursive: true
+      });
+      showToast('已保存到：Download/' + filename + ' 请在文件管理器查看');
+    } catch(e) {
+      showToast('保存失败：' + (e.message || '未知错误'));
+    }
+  } else {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('已保存到：Download/' + filename);
+  }
 }
 
 function exportAsTxt(notes) {
@@ -2605,7 +2620,12 @@ document.querySelectorAll('.share-app').forEach(el => {
     const title = note ? (note.title || '成书笔记') : '成书笔记';
 
     if (app === 'wechat' || app === 'wechat-moments') {
-      if (navigator.share) {
+      if (isCapacitor) {
+        try {
+          const { Share } = Capacitor.Plugins;
+          Share.share({ title, text }).then(() => showToast('已分享')).catch(() => { copyToClipboard(text); showToast('内容已复制，请打开微信粘贴'); });
+        } catch(e) { copyToClipboard(text); showToast('内容已复制，请打开微信粘贴'); }
+      } else if (navigator.share) {
         navigator.share({ title, text }).then(() => showToast('已分享')).catch(() => showToast('分享取消'));
       } else {
         copyToClipboard(text);

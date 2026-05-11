@@ -24,8 +24,8 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Install Capacitor CLI
-      run: npm install @capacitor/cli @capacitor/android @capacitor/core
+    - name: Install Capacitor CLI and Plugins
+      run: npm install @capacitor/cli @capacitor/android @capacitor/core @capacitor/filesystem @capacitor/share
 
     - name: Add Android platform
       run: npx cap add android
