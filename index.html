@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <title>成书笔记</title>
-<script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
+<script src="pako.min.js"></script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
@@ -575,7 +575,7 @@ body.dark .sel-checkbox.checked {
       <div class="header-actions">
         <button class="btn-icon" id="btn-focus-mode" title="专注模式">🎯</button>
         <button class="btn-icon" id="btn-find-replace" title="查找替换">🔍</button>
-        <button class="btn-icon" id="btn-share-current" title="分享内容（手机可发送到微信/QQ等，桌面端复制到剪贴板）">📤</button>
+        <button class="btn-icon" id="btn-ocr" title="📷 扫描图片文字（OCR）">📷</button>
       </div>
     </div>
 
@@ -1048,14 +1048,11 @@ function showBottomSheet(id, type) {
     document.getElementById('ctxb-pin').textContent = store.folders[id].pinned ? '📍 取消置顶' : '📌 置顶';
   }
   document.getElementById('ctxb-move').style.display = isNote ? 'flex' : 'none';
-  // 分享与导出：便签和文件夹都显示（文件夹会导出其内所有便签）
-  document.getElementById('ctxb-share').style.display = 'flex';
-  document.getElementById('ctxb-export').style.display = 'flex';
-  document.getElementById('ctxb-export-docx').style.display = 'flex';
-  // 更新按钮文字，区分便签和文件夹
-  document.getElementById('ctxb-share').textContent = isNote ? '📤 分享' : '📤 分享文件夹内容';
-  document.getElementById('ctxb-export').textContent = isNote ? '💾 导出为 TXT' : '💾 导出文件夹为 TXT';
-  document.getElementById('ctxb-export-docx').textContent = isNote ? '📄 导出为 DOCX' : '📄 导出文件夹为 DOCX';
+  // 分享与导出：仅便签显示，文件夹隐藏
+  document.getElementById('ctxb-share').style.display = isNote ? 'flex' : 'none';
+  document.getElementById('ctxb-export').style.display = isNote ? 'flex' : 'none';
+  document.getElementById('ctxb-export-docx').style.display = isNote ? 'flex' : 'none';
+  document.getElementById('ctxb-share').textContent = '📤 分享';
   overlay.classList.add('show');
   sheet.classList.add('show');
 }
@@ -1450,7 +1447,73 @@ document.getElementById('btn-focus-mode').addEventListener('click', function() {
   this.title = focusMode ? '退出专注模式' : '专注模式';
 });
 
-document.getElementById('btn-share-current').addEventListener('click', shareCurrentNote);
+// ===================== OCR 文字识别 =====================
+// 加载 Tesseract.js（首次使用时动态加载）
+var tesseractLoaded = false;
+
+document.getElementById('btn-ocr').addEventListener('click', async function() {
+  var btn = this;
+  btn.disabled = true;
+  btn.textContent = '⏳';
+  
+  // 创建图片选择器
+  var input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = async function(e) {
+    var file = e.target.files[0];
+    if (!file) { btn.disabled = false; btn.textContent = '📷'; return; }
+    
+    showToast('正在识别文字，请稍候…');
+    
+    // 动态加载 Tesseract.js
+    if (!tesseractLoaded) {
+      try {
+        await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js');
+        tesseractLoaded = true;
+      } catch(err) {
+        showToast('OCR库加载失败，请检查网络');
+        btn.disabled = false; btn.textContent = '📷';
+        return;
+      }
+    }
+    
+    // 识别文字
+    try {
+      var result = await Tesseract.recognize(file, 'chi_sim+eng', {
+        logger: function() {}
+      });
+      var text = result.data.text.trim();
+      if (!text) {
+        showToast('未识别到文字，请确保图片中包含清晰的文字');
+        btn.disabled = false; btn.textContent = '📷';
+        return;
+      }
+      // 将识别结果追加到当前便签
+      var editor = document.getElementById('note-content');
+      var currentText = editor.innerText.trim();
+      var insertText = currentText ? '\n\n' + text : text;
+      editor.innerHTML = escHtml(currentText + insertText).replace(/\n/g, '<br>');
+      saveCurrentNote();
+      showToast('文字已提取并追加到便签！');
+    } catch(err2) {
+      showToast('识别失败：' + err2.message);
+    }
+    btn.disabled = false; btn.textContent = '📷';
+  };
+  input.click();
+});
+
+// 动态加载JS脚本
+function loadScript(src) {
+  return new Promise(function(resolve, reject) {
+    var s = document.createElement('script');
+    s.src = src;
+    s.onload = resolve;
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
 
 function updateWordCount() {
   const text = document.getElementById('note-content').innerText;
