@@ -1,0 +1,32 @@
+{
+  "name": "phone-layered-notes",
+  "version": "1.0.0",
+  "description": "手机分层便签 - 支持无限层级文件夹的手机便签应用",
+  "private": true,
+  "scripts": {
+    "cap:add": "npx cap add android",
+    "cap:sync": "npx cap sync",
+    "cap:copy": "npx cap copy"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/cli": "^6.0.0",
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/filesystem": "^6.0.0",
+    "@capacitor/share": "^6.0.0"
+  },
+  "main": "sw.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wyq3636/phone-layered-notes.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/wyq3636/phone-layered-notes/issues"
+  },
+  "homepage": "https://github.com/wyq3636/phone-layered-notes#readme",
+  "dependencies": {}
+}

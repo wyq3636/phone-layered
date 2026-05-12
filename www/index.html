@@ -517,7 +517,7 @@ body.dark .sel-checkbox.checked {
       <div class="header-actions">
         <button class="btn-icon" id="btn-select-mode" title="多选">☑</button>
         <button class="btn-icon" id="btn-dark-mode" title="暗色模式">🌙</button>
-        <button class="btn-icon" id="btn-export-all" title="导出全部为DOCX文档">💾</button>
+        <button class="btn-icon" id="btn-export-all" title="导出全部为TXT文件">💾</button>
         <button class="btn-icon" id="btn-sort" title="排序" style="font-size:12px;width:auto;padding:0 10px;border-radius:16px;">按时间</button>
         <button class="btn-icon" id="btn-grid" title="网格模式" style="font-size:14px">⊞</button>
       </div>
@@ -634,7 +634,6 @@ body.dark .sel-checkbox.checked {
     <div class="ctx-item" id="ctxb-pin">📌 置顶</div>
     <div class="ctx-item" id="ctxb-share">📤 分享</div>
     <div class="ctx-item" id="ctxb-export">💾 导出为 TXT</div>
-    <div class="ctx-item" id="ctxb-export-docx">📄 导出为 DOCX</div>
     <div class="ctx-item" id="ctxb-move">📁 移动到…</div>
     <div class="ctx-item danger" id="ctxb-delete">🗑️ 删除</div>
     <div class="ctx-item" id="ctxb-cancel" style="justify-content:center;color:var(--text-muted);border-top:1px solid var(--border);margin-top:4px;padding-top:14px">取消</div>
@@ -1048,10 +1047,9 @@ function showBottomSheet(id, type) {
     document.getElementById('ctxb-pin').textContent = store.folders[id].pinned ? '📍 取消置顶' : '📌 置顶';
   }
   document.getElementById('ctxb-move').style.display = isNote ? 'flex' : 'none';
-  // 分享与导出：仅便签显示，文件夹隐藏
+  // 分享与导出：仅便签显示
   document.getElementById('ctxb-share').style.display = isNote ? 'flex' : 'none';
   document.getElementById('ctxb-export').style.display = isNote ? 'flex' : 'none';
-  document.getElementById('ctxb-export-docx').style.display = isNote ? 'flex' : 'none';
   document.getElementById('ctxb-share').textContent = '📤 分享';
   overlay.classList.add('show');
   sheet.classList.add('show');
@@ -1100,38 +1098,6 @@ document.getElementById('ctxb-export').addEventListener('click', function() {
     );
   } else {
     exportFolderTxt(contextTarget.id);
-  }
-});
-
-document.getElementById('ctxb-export-docx').addEventListener('click', function() {
-  hideBottomSheet();
-  if (!contextTarget) return;
-  if (contextTarget.type === 'note') {
-    var n2 = store.notes[contextTarget.id];
-    if (!n2) return;
-    showExportConfirmDialog(
-      n2.title || '无标题',
-      (n2.title || '便签') + '.docx',
-      (function(id) { return function() {
-        var nn = store.notes[id];
-        return [{ title: nn.title || '无标题', content: nn.content || '', time: '创建：' + new Date(nn.created || Date.now()).toLocaleString('zh-CN') }];
-      }; })(contextTarget.id),
-      'docx'
-    );
-  } else {
-    var folder2 = store.folders[contextTarget.id];
-    if (!folder2) return;
-    var notes2 = collectFolderNotes(contextTarget.id);
-    if (notes2.length === 0) { showToast('文件夹内没有便签可导出'); return; }
-    var paras2 = notes2.map(function(n) {
-      return { title: n.title || '无标题', content: n.content || '', time: '时间：' + new Date(n.updated || n.created).toLocaleString('zh-CN') };
-    });
-    showExportConfirmDialog(
-      folder2.name + '（' + notes2.length + ' 条便签）',
-      folder2.name + '_导出.docx',
-      function() { return paras2; },
-      'docx'
-    );
   }
 });
 
