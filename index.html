@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="成书笔记">
 <link rel="manifest" href="manifest.json">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%236C63FF'/%3E%3Cstop offset='100%25' stop-color='%234839B8'/%3E%3C/linearGradient%3E%3ClinearGradient id='gold' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%23FFD700'/%3E%3Cstop offset='100%25' stop-color='%23FF9500'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='116' fill='url(%23bg)'/%3E%3Crect x='96' y='120' width='280' height='320' rx='28' fill='white' opacity='0.95'/%3E%3Cline x1='140' y1='200' x2='332' y2='200' stroke='%23DDD' stroke-width='5' stroke-linecap='round'/%3E%3Cline x1='140' y1='250' x2='332' y2='250' stroke='%23DDD' stroke-width='5' stroke-linecap='round'/%3E%3Cline x1='140' y1='300' x2='280' y2='300' stroke='%23DDD' stroke-width='5' stroke-linecap='round'/%3E%3Cline x1='140' y1='350' x2='300' y2='350' stroke='%23DDD' stroke-width='5' stroke-linecap='round'/%3E%3Crect x='356' y='200' width='80' height='8' rx='4' fill='url(%23gold)'/%3E%3Crect x='376' y='220' width='40' height='8' rx='4' fill='url(%23gold)' opacity='0.7'/%3E%3Cpath d='M384 260 L384 380 L362 360 L340 380 L340 260 Z' fill='url(%23gold)'/%3E%3Crect x='376' y='260' width='8' height='8' rx='2' fill='white' opacity='0.5'/%3E%3Ctext x='256' y='476' text-anchor='middle' font-size='42' font-weight='bold' font-family='sans-serif' fill='white' opacity='0.9'%3E成书%3C/text%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
 <title>成书笔记</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -1046,8 +1046,12 @@ function showBottomSheet(id, type) {
     document.getElementById('ctxb-pin').textContent = store.folders[id].pinned ? '📍 取消置顶' : '📌 置顶';
   }
   document.getElementById('ctxb-move').style.display = isNote ? 'flex' : 'none';
-  document.getElementById('ctxb-share').style.display = isNote ? 'flex' : 'none';
-  document.getElementById('ctxb-export').style.display = isNote ? 'flex' : 'none';
+  // 分享与导出：便签和文件夹都显示（文件夹会导出其内所有便签）
+  document.getElementById('ctxb-share').style.display = 'flex';
+  document.getElementById('ctxb-export').style.display = 'flex';
+  // 更新按钮文字，区分便签和文件夹
+  document.getElementById('ctxb-share').textContent = isNote ? '📤 分享' : '📤 分享文件夹内容';
+  document.getElementById('ctxb-export').textContent = isNote ? '💾 导出 TXT' : '💾 导出文件夹为 TXT';
   overlay.classList.add('show');
   sheet.classList.add('show');
 }
@@ -1073,12 +1077,16 @@ document.getElementById('ctxb-rename').addEventListener('click', () => {
 
 document.getElementById('ctxb-share').addEventListener('click', () => {
   hideBottomSheet();
-  if (contextTarget && contextTarget.type === 'note') shareNote(contextTarget.id);
+  if (!contextTarget) return;
+  if (contextTarget.type === 'note') shareNote(contextTarget.id);
+  else shareFolder(contextTarget.id);
 });
 
 document.getElementById('ctxb-export').addEventListener('click', () => {
   hideBottomSheet();
-  if (contextTarget && contextTarget.type === 'note') exportNote(contextTarget.id);
+  if (!contextTarget) return;
+  if (contextTarget.type === 'note') exportNote(contextTarget.id);
+  else exportFolder(contextTarget.id);
 });
 
 document.getElementById('ctxb-pin').addEventListener('click', () => {
@@ -1382,54 +1390,6 @@ async function shareSelected() {
   await shareText('成书笔记_分享', content);
 }
 
-// ===================== EXPORT (save to file) =====================
-async function downloadFile(filename, content, mimeType) {
-  if (isCapacitor()) {
-    await tryDownloadViaCapacitor(filename, content);
-    return;
-  }
-  downloadViaBlob(filename, content, mimeType);
-}
-
-async function tryDownloadViaCapacitor(filename, content) {
-  // Try Capacitor Filesystem plugin
-  if (typeof Capacitor !== 'undefined' && Capacitor.Plugins) {
-    const capFS = Capacitor.Plugins.Filesystem || Capacitor.Plugins.filesystem;
-    if (capFS) {
-      try {
-        const bytes = new TextEncoder().encode(content);
-        const binStr = Array.from(bytes, b => String.fromCharCode(b)).join('');
-        const base64 = btoa(binStr);
-        await capFS.writeFile({ path: filename, data: base64, directory: 'EXTERNAL', recursive: true });
-        showToast('✅ 已保存到 Download/' + filename);
-        return;
-      } catch(e) {
-        try {
-          const bytes = new TextEncoder().encode(content);
-          const binStr = Array.from(bytes, b => String.fromCharCode(b)).join('');
-          const base64 = btoa(binStr);
-          await capFS.writeFile({ path: filename, data: base64, directory: 'DOCUMENTS', recursive: true });
-          showToast('✅ 已保存到应用文档目录');
-          return;
-        } catch(e2) {}
-      }
-    }
-  }
-  // Filesystem not available → share content so user can save
-  showToast('💡 请在分享面板选择「保存到文件」');
-  doShareOrCopy(content, filename);
-}
-
-function downloadViaBlob(filename, content, mimeType) {
-  const blob = new Blob(['﻿' + content], { type: mimeType });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = filename;
-  document.body.appendChild(a); a.click();
-  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
-  showToast('✅ 文件已下载: ' + filename);
-}
-
 // ===================== FOCUS MODE =====================
 let focusMode = false;
 document.getElementById('btn-focus-mode').addEventListener('click', function() {
@@ -1606,6 +1566,59 @@ document.getElementById('tb-underline').addEventListener('click', function() {
 });
 
 // ===================== EXPORT =====================
+
+// 递归收集指定文件夹（含子文件夹）内的所有便签，保留层级结构
+function collectFolderNotes(folderId) {
+  const folder = store.folders[folderId];
+  if (!folder) return [];
+  const result = [];
+  // 当前层级的便签
+  const notes = Object.values(store.notes).filter(n => n.parent === folderId);
+  notes.forEach(n => result.push(n));
+  // 递归子文件夹
+  (folder.children || []).forEach(cid => {
+    const sub = collectFolderNotes(cid);
+    result.push(...sub);
+  });
+  return result;
+}
+
+// 分享文件夹内全部便签
+async function shareFolder(folderId) {
+  const folder = store.folders[folderId];
+  if (!folder) { showToast('文件夹不存在'); return; }
+  const notes = collectFolderNotes(folderId);
+  if (notes.length === 0) { showToast('文件夹内没有便签可分享'); return; }
+  let content = '📁 ' + folder.name + '\n' + '='.repeat(30) + '\n\n';
+  notes.forEach((n, i) => {
+    if (i > 0) content += '\n' + '-'.repeat(20) + '\n\n';
+    content += (n.title || '无标题') + '\n';
+    content += '时间：' + new Date(n.updated || n.created).toLocaleString('zh-CN') + '\n\n';
+    content += (n.content || '');
+  });
+  await shareText(folder.name + '（' + notes.length + '条便签）', content);
+}
+
+// 导出文件夹内全部便签为 TXT 文件
+function exportFolder(folderId) {
+  const folder = store.folders[folderId];
+  if (!folder) { showToast('文件夹不存在'); return; }
+  const notes = collectFolderNotes(folderId);
+  if (notes.length === 0) { showToast('文件夹内没有便签可导出'); return; }
+  let content = '📁 文件夹：' + folder.name + '\n';
+  content += '导出时间：' + new Date().toLocaleString('zh-CN') + '\n';
+  content += '便签数量：' + notes.length + ' 条\n';
+  content += '='.repeat(40) + '\n\n';
+  notes.forEach((n, i) => {
+    if (i > 0) content += '\n' + '='.repeat(40) + '\n\n';
+    content += (n.title || '无标题') + '\n';
+    content += '时间：' + new Date(n.updated || n.created).toLocaleString('zh-CN') + '\n\n';
+    content += (n.content || '');
+  });
+  const filename = folder.name + '_导出.txt';
+  downloadFile(filename, content, 'text/plain;charset=utf-8');
+}
+
 function exportNote(id) {
   const n = store.notes[id];
   if (!n) { showToast('便签不存在'); return; }
@@ -1626,28 +1639,100 @@ function exportAll() {
   downloadFile('成书笔记_全部导出.txt', content, 'text/plain;charset=utf-8');
 }
 
+// 将UTF-8字符串编码为base64（支持中文）
+function utf8ToBase64(str) {
+  const bytes = new TextEncoder().encode(str);
+  let binStr = '';
+  bytes.forEach(b => binStr += String.fromCharCode(b));
+  return btoa(binStr);
+}
+
+// 显示"导出成功"的提示弹窗，告知用户文件保存路径
+function showExportSuccessDialog(filename, location) {
+  // 先关闭其他可能打开的弹层
+  hideBottomSheet();
+  // 动态创建提示弹窗
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:flex;align-items:flex-end;justify-content:center;';
+  overlay.innerHTML = `
+    <div style="background:var(--surface,#fff);border-radius:20px 20px 0 0;padding:24px 20px 32px;width:100%;max-width:430px;animation:slideUp 0.3s ease;">
+      <div style="width:36px;height:4px;background:#ccc;border-radius:2px;margin:0 auto 20px;"></div>
+      <div style="text-align:center;font-size:40px;margin-bottom:12px;">✅</div>
+      <div style="font-size:17px;font-weight:700;color:var(--text,#1A1A2E);text-align:center;margin-bottom:8px;">导出成功</div>
+      <div style="font-size:13px;color:var(--text-muted,#888);text-align:center;margin-bottom:16px;">文件已保存到手机</div>
+      <div style="background:var(--bg,#F5F5F7);border-radius:12px;padding:14px 16px;margin-bottom:20px;">
+        <div style="font-size:12px;color:var(--text-muted,#888);margin-bottom:4px;">文件名</div>
+        <div style="font-size:14px;font-weight:600;color:var(--text,#1A1A2E);word-break:break-all;">${filename}</div>
+        <div style="font-size:12px;color:var(--text-muted,#888);margin-top:8px;margin-bottom:4px;">保存位置</div>
+        <div style="font-size:13px;color:#6C63FF;word-break:break-all;">${location}</div>
+      </div>
+      <div style="font-size:12px;color:var(--text-muted,#888);text-align:center;margin-bottom:16px;">📂 打开「文件管理」→「${location.split('/')[0]}」文件夹即可找到</div>
+      <button onclick="this.closest('[data-export-dialog]').remove()" style="width:100%;padding:14px;border-radius:14px;border:none;background:#6C63FF;color:white;font-size:15px;font-weight:600;cursor:pointer;">知道了</button>
+    </div>`;
+  overlay.setAttribute('data-export-dialog','1');
+  overlay.addEventListener('click', function(e){ if(e.target===this) this.remove(); });
+  document.getElementById('app').appendChild(overlay);
+}
+
 async function downloadFile(filename, content, mimeType) {
   if (isCapacitor()) {
-    try {
-      const { Filesystem, Directory } = Capacitor.Plugins;
-      const base64 = btoa(unescape(encodeURIComponent(content)));
-      await Filesystem.writeFile({
-        path: 'Download/' + filename,
-        data: base64,
-        directory: Directory.External,
-        recursive: true
-      });
-      showToast('✅ 已保存到手机 Download 文件夹');
-    } catch(e) {
-      showToast('❌ 保存失败：' + (e.message || '未知错误'));
+    const base64 = utf8ToBase64(content);
+    const FS = (Capacitor.Plugins && (Capacitor.Plugins.Filesystem || Capacitor.Plugins.filesystem));
+    if (!FS) {
+      // Filesystem插件未安装，回退到分享
+      showToast('💡 即将打开分享，请选择「保存到文件」');
+      setTimeout(() => {
+        const sharePlugin = Capacitor.Plugins && (Capacitor.Plugins.Share || Capacitor.Plugins.share);
+        if (sharePlugin) {
+          sharePlugin.share({ title: filename, text: content, dialogTitle: '保存便签文件' }).catch(()=>{});
+        } else if (navigator.share) {
+          navigator.share({ title: filename, text: content }).catch(()=>{});
+        } else {
+          copyToClipboard(content).then(()=>showToast('📋 内容已复制，请手动粘贴保存'));
+        }
+      }, 400);
+      return;
     }
+
+    // 策略1：写入 ExternalStorage（手机内部存储 Download 文件夹）
+    const strategies = [
+      { path: 'Download/' + filename,   directory: 'EXTERNAL_STORAGE', label: 'Download/' + filename },
+      { path: 'Downloads/' + filename,  directory: 'EXTERNAL_STORAGE', label: 'Downloads/' + filename },
+      { path: filename,                  directory: 'EXTERNAL',         label: '外部存储/' + filename },
+      { path: filename,                  directory: 'DOCUMENTS',        label: '文档/' + filename },
+      { path: filename,                  directory: 'DATA',             label: '应用数据/' + filename },
+    ];
+
+    for (const s of strategies) {
+      try {
+        await FS.writeFile({ path: s.path, data: base64, directory: s.directory, recursive: true });
+        showExportSuccessDialog(filename, s.label);
+        return;
+      } catch(e) {
+        // 继续尝试下一个策略
+      }
+    }
+
+    // 所有策略都失败 → 通过分享保存
+    showToast('💡 请在分享面板中选择「保存到文件」');
+    setTimeout(() => {
+      const sharePlugin = Capacitor.Plugins && (Capacitor.Plugins.Share || Capacitor.Plugins.share);
+      if (sharePlugin) {
+        sharePlugin.share({ title: filename, text: content, dialogTitle: '保存便签文件' }).catch(()=>{});
+      } else if (navigator.share) {
+        navigator.share({ title: filename, text: content }).catch(()=>{});
+      } else {
+        copyToClipboard(content).then(ok => showToast(ok ? '📋 内容已复制到剪贴板' : '❌ 导出失败，请重试'));
+      }
+    }, 500);
   } else {
-    const blob = new Blob(['﻿' + content], { type: mimeType });
+    // 网页端：使用Blob下载
+    const blob = new Blob(['\uFEFF' + content], { type: mimeType || 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url; a.download = filename;
     document.body.appendChild(a); a.click();
-    setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+    setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 200);
     showToast('✅ 文件已下载：' + filename);
   }
 }
