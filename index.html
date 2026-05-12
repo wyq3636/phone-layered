@@ -10,6 +10,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <title>成书笔记</title>
+<script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
@@ -516,7 +517,7 @@ body.dark .sel-checkbox.checked {
       <div class="header-actions">
         <button class="btn-icon" id="btn-select-mode" title="多选">☑</button>
         <button class="btn-icon" id="btn-dark-mode" title="暗色模式">🌙</button>
-        <button class="btn-icon" id="btn-export-all" title="导出全部为TXT文件">💾</button>
+        <button class="btn-icon" id="btn-export-all" title="导出全部为DOCX文档">💾</button>
         <button class="btn-icon" id="btn-sort" title="排序" style="font-size:12px;width:auto;padding:0 10px;border-radius:16px;">按时间</button>
         <button class="btn-icon" id="btn-grid" title="网格模式" style="font-size:14px">⊞</button>
       </div>
@@ -1790,7 +1791,7 @@ async function downloadDocxFile(filename, paragraphs) {
   }
 }
 
-// 简单的纯 JS ZIP 构造器（Deflate 压缩，兼容所有现代浏览器）
+// 纯 JS 构造 ZIP 文件（使用标准 DEFLATE 压缩，兼容所有现代浏览器）
 async function createZipBlob(files) {
   var parts = [];
   var centralDir = [];
@@ -1812,23 +1813,6 @@ async function createZipBlob(files) {
     return (crc ^ -1) >>> 0;
   }
 
-  function deflate(data) {
-    // 使用 Raw Deflate（无外部库，兼容模式存储）
-    var raw = [];
-    // Store blocks
-    var maxBlock = 65535;
-    for (var i = 0; i < data.length; i += maxBlock) {
-      var chunk = data.slice(i, i + maxBlock);
-      var isLast = (i + maxBlock >= data.length);
-      var len = chunk.length;
-      raw.push(isLast ? 1 : 0);
-      raw.push(len & 0xFF, (len >> 8) & 0xFF);
-      raw.push((~len) & 0xFF, ((~len) >> 8) & 0xFF);
-      for (var j = 0; j < chunk.length; j++) raw.push(chunk[j]);
-    }
-    return new Uint8Array(raw);
-  }
-
   for (var name in files) {
     var content = files[name];
     var byteContent;
@@ -1837,17 +1821,18 @@ async function createZipBlob(files) {
     } else {
       byteContent = new Uint8Array(content);
     }
-    var compressed = deflate(byteContent);
+    // 使用 pako 进行真正的 DEFLATE 压缩
+    var compressed = pako.deflate(byteContent);
     var crc = crc32(byteContent);
     var nameBytes = new TextEncoder().encode(name);
     var localEntry = new Uint8Array([
-      0x50, 0x4B, 0x03, 0x04, // local file header
-      0x14, 0x00, // version needed
+      0x50, 0x4B, 0x03, 0x04, // local file header signature
+      0x14, 0x00, // version needed to extract (2.0)
       0x00, 0x00, // general purpose bit flag
-      0x00, 0x00, // compression method (store)
-      0x00, 0x00, // mod time
-      0x00, 0x00, // mod date
-      crc & 0xFF, (crc >> 8) & 0xFF, (crc >> 16) & 0xFF, (crc >> 24) & 0xFF, // crc32
+      0x08, 0x00, // compression method (8 = DEFLATE)
+      0x00, 0x00, // last mod file time
+      0x00, 0x00, // last mod file date
+      crc & 0xFF, (crc >> 8) & 0xFF, (crc >> 16) & 0xFF, (crc >> 24) & 0xFF, // crc-32
       compressed.length & 0xFF, ((compressed.length >> 8)) & 0xFF, ((compressed.length >> 16)) & 0xFF, ((compressed.length >> 24)) & 0xFF, // compressed size
       byteContent.length & 0xFF, ((byteContent.length >> 8)) & 0xFF, ((byteContent.length >> 16)) & 0xFF, ((byteContent.length >> 24)) & 0xFF, // uncompressed size
       nameBytes.length & 0xFF, ((nameBytes.length >> 8)) & 0xFF, // file name length
@@ -1874,13 +1859,13 @@ async function createZipBlob(files) {
     var e = centralDir[i];
     var nameBytes2 = new TextEncoder().encode(e.name);
     var cdEntry = new Uint8Array([
-      0x50, 0x4B, 0x01, 0x02, // central dir header
+      0x50, 0x4B, 0x01, 0x02, // central dir header signature
       0x14, 0x00, // version made by
-      0x14, 0x00, // version needed
+      0x14, 0x00, // version needed to extract
       0x00, 0x00, // general purpose bit flag
-      0x00, 0x00, // compression method
-      0x00, 0x00, // mod time
-      0x00, 0x00, // mod date
+      0x08, 0x00, // compression method (8 = DEFLATE)
+      0x00, 0x00, // last mod file time
+      0x00, 0x00, // last mod file date
       e.crc & 0xFF, (e.crc >> 8) & 0xFF, (e.crc >> 16) & 0xFF, (e.crc >> 24) & 0xFF,
       e.compSize & 0xFF, ((e.compSize >> 8)) & 0xFF, ((e.compSize >> 16)) & 0xFF, ((e.compSize >> 24)) & 0xFF,
       e.uncompSize & 0xFF, ((e.uncompSize >> 8)) & 0xFF, ((e.uncompSize >> 16)) & 0xFF, ((e.uncompSize >> 24)) & 0xFF,
@@ -1901,7 +1886,7 @@ async function createZipBlob(files) {
 
   var cdLen = offset - cdOffset;
   var eocd = new Uint8Array([
-    0x50, 0x4B, 0x05, 0x06, // end of central dir
+    0x50, 0x4B, 0x05, 0x06, // end of central dir signature
     0x00, 0x00, // disk number
     0x00, 0x00, // disk with central dir
     centralDir.length & 0xFF, ((centralDir.length >> 8)) & 0xFF,
