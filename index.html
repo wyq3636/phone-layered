@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="成书笔记">
 <link rel="manifest" href="manifest.json">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%23FFD700'/%3E%3Cstop offset='100%25' stop-color='%23FF8C00'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='100' fill='%231A1A2E'/%3E%3Cpath d='M120 160 h272 q20 0 20 20 v200 q0 20-20 20 H140 q-20 0-20-20 Z' fill='%23F5F0E0'/%3E%3Cpath d='M280 160 v240' fill='none' stroke='%23DDD' stroke-width='2'/%3E%3Cline x1='150' y1='200' x2='260' y2='200' stroke='%23CCC' stroke-width='3'/%3E%3Cline x1='150' y1='240' x2='260' y2='240' stroke='%23CCC' stroke-width='3'/%3E%3Cline x1='150' y1='280' x2='260' y2='280' stroke='%23CCC' stroke-width='3'/%3E%3Cline x1='150' y1='320' x2='220' y2='320' stroke='%23CCC' stroke-width='3'/%3E%3Cpath d='M300 140 l15-50 l15 50 h-30Z' fill='url(%23g)' stroke='%23C8A200' stroke-width='2'/%3E%3Cpath d='M310 140 q5 120 3 240' stroke='url(%23g)' stroke-width='12' stroke-linecap='round'/%3E%3Cpath d='M308 368 q20-2 18 16 q-3 14-15 10' fill='url(%23g)'/%3E%3Ccircle cx='380' cy='300' r='20' fill='none' stroke='%23FFD700' stroke-width='4' opacity='0.5'/%3E%3Ccircle cx='380' cy='300' r='12' fill='none' stroke='%23FFD700' stroke-width='3' opacity='0.4'/%3E%3Ccircle cx='380' cy='300' r='5' fill='%23FFD700' opacity='0.6'/%3E%3Ctext x='256' y='480' text-anchor='middle' font-size='28' font-family='serif' fill='%23FFD700' opacity='0.8' font-style='italic'%3E%E2%9C%8D%3C/text%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%236C63FF'/%3E%3Cstop offset='100%25' stop-color='%234839B8'/%3E%3C/linearGradient%3E%3ClinearGradient id='gold' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%23FFD700'/%3E%3Cstop offset='100%25' stop-color='%23FF9500'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='116' fill='url(%23bg)'/%3E%3Crect x='96' y='120' width='280' height='320' rx='28' fill='white' opacity='0.95'/%3E%3Cline x1='140' y1='200' x2='332' y2='200' stroke='%23DDD' stroke-width='5' stroke-linecap='round'/%3E%3Cline x1='140' y1='250' x2='332' y2='250' stroke='%23DDD' stroke-width='5' stroke-linecap='round'/%3E%3Cline x1='140' y1='300' x2='280' y2='300' stroke='%23DDD' stroke-width='5' stroke-linecap='round'/%3E%3Cline x1='140' y1='350' x2='300' y2='350' stroke='%23DDD' stroke-width='5' stroke-linecap='round'/%3E%3Crect x='356' y='200' width='80' height='8' rx='4' fill='url(%23gold)'/%3E%3Crect x='376' y='220' width='40' height='8' rx='4' fill='url(%23gold)' opacity='0.7'/%3E%3Cpath d='M384 260 L384 380 L362 360 L340 380 L340 260 Z' fill='url(%23gold)'/%3E%3Crect x='376' y='260' width='8' height='8' rx='2' fill='white' opacity='0.5'/%3E%3Ctext x='256' y='476' text-anchor='middle' font-size='42' font-weight='bold' font-family='sans-serif' fill='white' opacity='0.9'%3E成书%3C/text%3E%3C/svg%3E">
 <title>成书笔记</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -448,18 +448,31 @@ html, body {
 }
 
 /* MULTI-SELECT */
-.select-mode .file-item { padding-left: 10px; }
+.select-mode .file-item { padding-left: 10px; transition: all 0.15s; }
 .sel-checkbox {
   display: none; width: 24px; height: 24px; border-radius: 50%;
-  border: 2px solid #bbb; flex-shrink: 0; margin-right: 4px;
-  align-items: center; justify-content: center; font-size: 13px;
-  color: white; transition: all 0.2s;
+  border: 2.5px solid #999; flex-shrink: 0; margin-right: 8px;
+  align-items: center; justify-content: center; font-size: 14px; font-weight: 700;
+  color: transparent; transition: all 0.15s; background: white;
 }
 .select-mode .sel-checkbox { display: flex; }
-.sel-checkbox.checked { background: var(--primary); border-color: var(--primary); transform: scale(1.1); }
+.sel-checkbox.checked {
+  background: #4CAF50 !important; border-color: #388E3C !important;
+  color: white !important; transform: scale(1.1);
+}
 .select-mode .file-item.selected {
-  background: var(--primary-light); border-color: var(--primary);
-  box-shadow: 0 0 0 1px var(--primary);
+  background: #C8E6C9 !important;
+  border: 2px solid #4CAF50 !important;
+  border-left: 5px solid #4CAF50 !important;
+}
+body.dark .select-mode .file-item.selected {
+  background: #1B5E20 !important;
+  border: 2px solid #66BB6A !important;
+  border-left: 5px solid #66BB6A !important;
+}
+body.dark .sel-checkbox { border-color: #888; background: #333; }
+body.dark .sel-checkbox.checked {
+  background: #4CAF50 !important; border-color: #66BB6A !important; color: white !important;
 }
 .sel-toolbar {
   display: none; align-items: center; justify-content: space-around;
@@ -844,14 +857,19 @@ function renderFileList(searchQuery) {
   // Click handlers
   list.querySelectorAll('.file-item').forEach(el => {
     el.addEventListener('click', function(e) {
-      if (selectMode) { toggleSelectItem(this.dataset.id, this.dataset.type); return; }
+      if (selectMode) {
+        e.stopPropagation();
+        toggleSelectItem(this.dataset.id, this.dataset.type, this);
+        return;
+      }
       if (e.target.classList.contains('item-actions') || e.target.closest('.item-actions')) {
         e.stopPropagation();
         showBottomSheet(this.dataset.id, this.dataset.type);
         return;
       }
       if (e.target.classList.contains('sel-checkbox') || e.target.closest('.sel-checkbox')) {
-        toggleSelectItem(this.dataset.id, this.dataset.type);
+        e.stopPropagation();
+        toggleSelectItem(this.dataset.id, this.dataset.type, this);
         return;
       }
       if (this.dataset.type === 'folder') openFolder(this.dataset.id);
@@ -1250,9 +1268,39 @@ document.getElementById('note-content').addEventListener('input', () => {
   autoSaveTimer = setTimeout(saveCurrentNote, 1500);
 });
 
-// ===================== CLIPBOARD (robust fallback) =====================
+// ===================== CAPACITOR PLUGIN HELPERS =====================
+function getCapPlugin(name) {
+  try {
+    if (typeof Capacitor === 'undefined') return null;
+    if (Capacitor.Plugins) {
+      // Try exact name
+      if (Capacitor.Plugins[name]) return Capacitor.Plugins[name];
+      // Try case variations
+      const keys = Object.keys(Capacitor.Plugins);
+      const match = keys.find(k => k.toLowerCase() === name.toLowerCase());
+      if (match) return Capacitor.Plugins[match];
+      // Debug: log available plugins (runs once)
+      if (!getCapPlugin._logged) {
+        console.log('Available Capacitor plugins:', keys);
+        getCapPlugin._logged = true;
+      }
+    }
+  } catch(e) {}
+  return null;
+}
+
+// List all Capacitor plugins for debugging
+function listCapPlugins() {
+  try {
+    if (typeof Capacitor !== 'undefined' && Capacitor.Plugins) {
+      return Object.keys(Capacitor.Plugins);
+    }
+  } catch(e) {}
+  return [];
+}
+
+// ===================== CLIPBOARD =====================
 function copyToClipboard(text) {
-  // Try modern clipboard API first
   if (navigator.clipboard && navigator.clipboard.writeText) {
     return navigator.clipboard.writeText(text).then(() => true).catch(() => fallbackCopy(text));
   }
@@ -1266,12 +1314,8 @@ function fallbackCopy(text) {
     ta.style.position = 'fixed'; ta.style.left = '-9999px'; ta.style.top = '-9999px';
     document.body.appendChild(ta);
     ta.focus(); ta.select();
-    try {
-      document.execCommand('copy');
-      resolve(true);
-    } catch(e) {
-      resolve(false);
-    }
+    try { document.execCommand('copy'); resolve(true); }
+    catch(e) { resolve(false); }
     document.body.removeChild(ta);
   });
 }
@@ -1279,22 +1323,21 @@ function fallbackCopy(text) {
 // ===================== SHARE =====================
 async function shareText(title, content) {
   const text = (title || '无标题') + (content ? '\n\n' + content : '');
-  // Mobile: native share sheet (shows WeChat, QQ, email, etc.)
+  // Try Web Share API first
   if (navigator.share) {
-    try {
-      await navigator.share({ title: title || '成书笔记', text: text });
-      return;
-    } catch(e) {
-      if (e.name === 'AbortError') return; // user cancelled
+    try { await navigator.share({ title: title || '成书笔记', text: text }); return; }
+    catch(e) { if (e.name === 'AbortError') return; }
+  }
+  // Try Capacitor Share plugin
+  try {
+    if (typeof Capacitor !== 'undefined' && Capacitor.Plugins) {
+      const s = Capacitor.Plugins.Share || Capacitor.Plugins.share;
+      if (s) { await s.share({ title: title || '成书笔记', text: text }); return; }
     }
-  }
-  // Desktop / fallback: copy to clipboard
+  } catch(e) {}
+  // Fallback: clipboard
   const ok = await copyToClipboard(text);
-  if (ok) {
-    showToast('✅ 已复制到剪贴板，可粘贴到任意应用');
-  } else {
-    showToast('❌ 复制失败，请尝试导出 TXT 文件');
-  }
+  showToast(ok ? '✅ 已复制到剪贴板' : '❌ 复制失败');
 }
 
 async function shareCurrentNote() {
@@ -1327,7 +1370,7 @@ async function shareSelected() {
   if (ids.length === 0) { showToast('请先选择便签'); return; }
   let content = '';
   let count = 0;
-  ids.forEach((id, i) => {
+  ids.forEach((id) => {
     const item = selectedItems[id];
     if (item.type !== 'note') return;
     const n = item.data;
@@ -1337,6 +1380,54 @@ async function shareSelected() {
   });
   if (count === 0) { showToast('请选择便签（不能只选文件夹）'); return; }
   await shareText('成书笔记_分享', content);
+}
+
+// ===================== EXPORT (save to file) =====================
+async function downloadFile(filename, content, mimeType) {
+  if (isCapacitor()) {
+    await tryDownloadViaCapacitor(filename, content);
+    return;
+  }
+  downloadViaBlob(filename, content, mimeType);
+}
+
+async function tryDownloadViaCapacitor(filename, content) {
+  // Try Capacitor Filesystem plugin
+  if (typeof Capacitor !== 'undefined' && Capacitor.Plugins) {
+    const capFS = Capacitor.Plugins.Filesystem || Capacitor.Plugins.filesystem;
+    if (capFS) {
+      try {
+        const bytes = new TextEncoder().encode(content);
+        const binStr = Array.from(bytes, b => String.fromCharCode(b)).join('');
+        const base64 = btoa(binStr);
+        await capFS.writeFile({ path: filename, data: base64, directory: 'EXTERNAL', recursive: true });
+        showToast('✅ 已保存到 Download/' + filename);
+        return;
+      } catch(e) {
+        try {
+          const bytes = new TextEncoder().encode(content);
+          const binStr = Array.from(bytes, b => String.fromCharCode(b)).join('');
+          const base64 = btoa(binStr);
+          await capFS.writeFile({ path: filename, data: base64, directory: 'DOCUMENTS', recursive: true });
+          showToast('✅ 已保存到应用文档目录');
+          return;
+        } catch(e2) {}
+      }
+    }
+  }
+  // Filesystem not available → share content so user can save
+  showToast('💡 请在分享面板选择「保存到文件」');
+  doShareOrCopy(content, filename);
+}
+
+function downloadViaBlob(filename, content, mimeType) {
+  const blob = new Blob(['﻿' + content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+  showToast('✅ 文件已下载: ' + filename);
 }
 
 // ===================== FOCUS MODE =====================
@@ -1621,20 +1712,45 @@ function toggleSelectMode() {
   renderFileList(document.getElementById('search-input').value.trim());
 }
 
-function toggleSelectItem(id, type) {
+function toggleSelectItem(id, type, el) {
   if (!selectMode) return;
-  if (selectedItems[id]) {
+  const isSelected = !!selectedItems[id];
+  if (isSelected) {
     delete selectedItems[id];
   } else {
     const data = type === 'folder' ? store.folders[id] : store.notes[id];
     if (data) selectedItems[id] = { type, data };
   }
   updateSelCount();
-  // Update checkbox + item highlight
-  const cb = document.querySelector(`.sel-checkbox[data-sel="${id}"]`);
-  const item = cb ? cb.closest('.file-item') : null;
-  if (cb) cb.classList.toggle('checked', !!selectedItems[id]);
-  if (item) item.classList.toggle('selected', !!selectedItems[id]);
+  // Direct inline style change for IMMEDIATE visual feedback
+  if (el) {
+    const nowSelected = !isSelected;
+    if (nowSelected) {
+      const isDark = document.body.classList.contains('dark');
+      el.style.setProperty('background', isDark ? '#1B5E20' : '#C8E6C9', 'important');
+      el.style.setProperty('border', '2px solid #4CAF50', 'important');
+      el.style.setProperty('border-left', '5px solid #4CAF50', 'important');
+    } else {
+      el.style.removeProperty('background');
+      el.style.removeProperty('border');
+      el.style.removeProperty('border-left');
+    }
+    // Also toggle the checkbox inside
+    const cb = el.querySelector('.sel-checkbox');
+    if (cb) {
+      if (nowSelected) {
+        cb.style.setProperty('background', '#4CAF50', 'important');
+        cb.style.setProperty('border-color', '#388E3C', 'important');
+        cb.style.setProperty('color', 'white', 'important');
+        cb.textContent = '✓';
+      } else {
+        cb.style.removeProperty('background');
+        cb.style.removeProperty('border-color');
+        cb.style.removeProperty('color');
+        cb.textContent = '';
+      }
+    }
+  }
 }
 
 function updateSelCount() {
@@ -1644,9 +1760,9 @@ function updateSelCount() {
   el.style.display = selectMode ? 'block' : 'none';
 }
 
-async function exportSelected() {
+function exportSelected() {
   const ids = Object.keys(selectedItems).filter(id => selectedItems[id].type === 'note');
-  if (ids.length === 0) { showToast('请选择便签导出（文件夹不支持导出）'); return; }
+  if (ids.length === 0) { showToast('请选择便签导出'); return; }
   if (ids.length === 1) { exportNote(ids[0]); return; }
   let content = '';
   ids.forEach((id, i) => {
@@ -1661,7 +1777,7 @@ async function exportSelected() {
   downloadFile('成书笔记_批量导出.txt', content, 'text/plain;charset=utf-8');
 }
 
-async function deleteSelected() {
+function deleteSelected() {
   const ids = Object.keys(selectedItems);
   if (ids.length === 0) { showToast('请先选择'); return; }
   const noteCount = ids.filter(id => selectedItems[id].type === 'note').length;
